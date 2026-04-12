@@ -1,0 +1,105 @@
+:host {
+  --icon-width: 24px;
+  --border-width: 1px;
+  --border-color: #e0e0e0;
+  --box-shadow: 0 0 5px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.1);
+  --bg-focus: #cfe2ff;
+  --bg-error: #ffaaaa;
+  --bg-calendar: #f0f2f5;
+  --max-width: 320px;
+
+  display: block;
+  max-width: var(--max-width);
+}
+
+.wrapper {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+  box-shadow: var(--box-shadow);
+}
+
+:host(:invalid) .wrapper {
+  border-color: red;
+}
+
+:host([open]) .wrapper {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+custom-calendar {
+  position: absolute;
+  top: calc(100% + var(--border-width));
+  left: 0;
+
+  z-index: 100;
+  background-color: var(--bg-calendar);
+}
+
+input[name="year"],
+input[name="month"],
+input[name="date"] {
+  outline: none;
+  border: none;
+  background: transparent;
+  min-width: 3.5ch;
+  font-family: monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+
+  &::placeholder {
+    color: #767676
+  }
+
+  &:focus {
+    background-color: var(--bg-focus);
+  }
+
+  &:invalid {
+    background-color: var(--bg-error);
+  }
+}
+
+
+input[name="year"] {
+  flex: 2;
+  max-width: 7ch;
+}
+
+input[name="month"],
+input[name="date"] {
+  flex: 1;
+  max-width: 3.5ch;
+}
+
+#first-input-label {
+  flex: 10;
+}
+
+/* Сокрытие стрелочек */
+/* Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+
+#icon-wrapper {
+  background-color: transparent;
+  border: 0;
+  margin-left: auto;
+}
+
+.icon {
+  width: var(--icon-width);
+  cursor: pointer;
+}

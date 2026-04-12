@@ -1,0 +1,21 @@
+<date-picker data-testid="basic" name="date"></date-picker>
+
+<section class="form-section">
+  <form id="test-form">
+    <input type="date" name="native-date" />
+    <date-picker data-testid="form-connected" name="date" required tabindex="0"></date-picker>
+    <span class="error">Значение должно быть заполнено</span>
+
+    <div class="actions">
+      <button type="submit">Submit</button>
+      <button type="reset">Reset</button>
+      <button id="disable-button" type="button">Disable/Enable</button>
+    </div>
+
+    <div data-testid="form-info">
+      <span class="title">Данные формы: </span>
+      <span class="form-data"></span>
+      <span class="form-error"></span>
+    </div>
+  </form>
+</section>

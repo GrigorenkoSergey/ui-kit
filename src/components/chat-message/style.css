@@ -1,0 +1,101 @@
+:host {
+  --img-width: 50px;
+
+  display: flex;
+  align-items: flex-end;
+}
+
+:host([kind="out"]) {
+  flex-flow: row-reverse;
+}
+
+.avatar {
+  width: var(--img-width);
+  aspect-ratio: 1;
+  background-color: lightskyblue;
+  border-radius: 50%;
+  border: 1px solid lightgrey;
+
+  @media (width < 541px) {
+    display: none;
+  }
+}
+
+.bubble {
+  --bg-color: #e4e6eb;
+  --border-radius: 1.25rem;
+
+  margin-bottom: calc(var(--img-width) / 2);
+  display: flex;
+
+  :host([kind="out"]) & {
+    --bg-color: #0084ff;
+
+    flex-flow: row-reverse;
+  }
+}
+
+.info-wrapper {
+  padding: 0.8rem;
+  background-color: var(--bg-color);
+  border-radius: var(--border-radius);
+  position: relative;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  background-color: var(--bg-color);
+
+  :host([kind="in"]) & {
+    color: black;
+  }
+
+  :host([kind="out"]) & {
+    color: white;
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.date {
+  font-size: small;
+  color: black;
+
+  :host([kind="out"]) & {
+    color: white;
+  }
+}
+
+.read-state,
+.read-state::after {
+  --border-color: green;
+
+  display: block;
+  width: 5px;
+  height: 10px;
+  rotate: 45deg;
+  translate: 0 -3px;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.read-state::after {
+  rotate: none;
+  translate: 3px -3px;
+}
+
+:host([read]) .read-state::after {
+  content: "";
+}
+
+:host([kind="out"]) .read-state,
+:host([kind="out"]) .read-state::after {
+  --border-color: ivory;
+}

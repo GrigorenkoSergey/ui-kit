@@ -1,0 +1,73 @@
+:host {
+  display: block;
+  position: relative;
+}
+
+:host([hidden]) {
+  display: none
+}
+
+:host([open]) {
+  ul {
+    display: block;
+  }
+
+  .arrow {
+    rotate: 180deg;
+  }
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+input {
+  display: block;
+  padding: 8px;
+  font-size: 16px;
+  width: 100%;
+  cursor: pointer;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: rgb(117 177 164);
+  position: absolute;
+  width: 100%;
+  display: none;
+  z-index: 100;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  cursor: pointer;
+
+  &[aria-selected="true"] {
+    background-color: orange;
+  }
+
+  &[hidden] {
+    display: none;
+  }
+
+  ul:not(:has(.keyboard-focused)) &:hover,
+  &.keyboard-focused {
+    background-color: red;
+    outline: 1px solid;
+  }
+}
+
+.arrow {
+  position: absolute;
+  right: 0.2rem;
+  pointer-events: none;
+
+  &::after {
+    content: "▼";
+  }
+}
