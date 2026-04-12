@@ -13,7 +13,7 @@ jobs:
       id-token: write
 
     env:
-      BASE_URL: /native-SPA/
+      BASE_URL: /storybook/
 
     steps:
       - uses: actions/checkout@v4

@@ -1,5 +1,5 @@
 {
-  "name": "native-spa",
+  "name": "storybook",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,8 +10,6 @@
     "test-unit": "npx playwright test unit-testing --project=chromium",
     "test-e2e": "npx playwright test e2e --project=chromium",
     "test-ui": "IS_UI_MODE=true npx playwright test --ui",
-    "storybook": "npx webpack serve --config src/.storybook/webpack.config.cjs",
-    "storybook-build": "npx webpack --mode production --env mode=production --config src/.storybook/webpack.config.cjs",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit"
   },
