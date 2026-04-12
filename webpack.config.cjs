@@ -1,4 +1,3 @@
- 
 require("dotenv").config();
 
 const path = require("path");
@@ -49,7 +48,7 @@ const storeInputs = storeFiles.reduce((acc, file) => {
 }, {});
 
 module.exports = env => {
-  const base = process.env.BASE_URL;
+  const base = "/";
   const isProd = env.mode === "production";
   const buildKey = isProd ? Number(new Date()) : 0;
 
