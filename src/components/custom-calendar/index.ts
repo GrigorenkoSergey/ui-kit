@@ -90,6 +90,18 @@ export class CustomCalendar extends HTMLElement {
     this.attachShadow({mode: "open"});
   }
 
+  /**
+   * Возвращает "правильный" конструктор кастомного элемента.
+   * Это решает проблему дублирования модулей, когда сборщики (напр. Webpack)
+   * могут создать несколько экземпляров класса при динамическом импорте.
+   * Метод гарантирует, что мы всегда работаем с тем конструктором,
+   * который был зарегистрирован в `customElements`.
+   */
+  static getConstructor(): typeof CustomCalendar {
+    const result = customElements.get("custom-calendar") || CustomCalendar;
+    return result as typeof CustomCalendar;
+  }
+
   static init() {
     initCustomElement("custom-calendar", CustomCalendar);
   }
@@ -643,4 +655,3 @@ export class CustomCalendar extends HTMLElement {
     }
   }
 }
-
