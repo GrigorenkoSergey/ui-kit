@@ -12,7 +12,7 @@ const option2Text = "Опция-2";
 test.beforeEach(async ({ page: testPage }) => {
   page = testPage;
 
-  await page.goto("http://localhost:8082/pages/custom-autocomplete/");
+  await page.goto("http://localhost:8080/pages/custom-autocomplete/");
   elem = page.getByTestId("basic");
   input = elem.getByRole("textbox");
 });
