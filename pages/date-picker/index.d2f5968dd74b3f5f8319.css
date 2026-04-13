@@ -1,0 +1,16 @@
+.form-section {
+  margin-top: 50px;
+}
+
+.error {
+  color: red;
+  position: absolute;
+}
+
+.error:empty {
+  display: none;
+}
+
+.actions {
+  margin-top: 32px;
+}
