@@ -8,10 +8,9 @@
     "jsx": "react",
     "allowJs": true,
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ]
     },
     "sourceMap": true
