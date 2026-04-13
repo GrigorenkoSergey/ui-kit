@@ -7,7 +7,7 @@ const expectSelected = async (locator: Locator, toBeSelected: boolean) => {
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date(2026, 1, 14));
-  await page.goto("http://localhost:8080/pages/date-picker/");
+  await page.goto("http://localhost:8080/storybook/pages/date-picker/");
 });
 
 test("Стрелочки вправо-влево перемещают фокус на другие поля", async ({page}) => {

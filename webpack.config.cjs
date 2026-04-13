@@ -48,7 +48,7 @@ const storeInputs = storeFiles.reduce((acc, file) => {
 }, {});
 
 module.exports = env => {
-  const base = "/";
+  const base = process.env.BASE_URL || "/";
   const isProd = env.mode === "production";
   const buildKey = isProd ? Number(new Date()) : 0;
 

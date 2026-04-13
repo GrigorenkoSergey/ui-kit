@@ -7,7 +7,7 @@ const expectSelected = async (locator: Locator, toBeSelected: boolean) => {
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date(2026, 1, 14));
-  await page.goto("http://localhost:8080/pages/custom-calendar/");
+  await page.goto("http://localhost:8080/storybook/pages/custom-calendar/");
 });
 
 test("Отображение и переключение месяцев", async ({page}) => {
