@@ -32,21 +32,6 @@ const getPageInputs = (dir, root) => {
 
 const pageInputs = getPageInputs(pathToPages, pathToPages);
 
-const storesDir = path.resolve(__dirname, "src/stores");
-const storeFiles = fs
-  .readdirSync(storesDir)
-  .filter(file => fs.statSync(path.join(storesDir, file)).isFile() && file.endsWith(".js"));
-
-const storeInputs = storeFiles.reduce((acc, file) => {
-  const key = file.replace(".js", "");
-  acc[key] = {
-    import: `${storesDir}/${file}`,
-    dependOn: "state-management",
-  };
-
-  return acc;
-}, {});
-
 module.exports = env => {
   const base = process.env.BASE_URL || "/";
   const isProd = env.mode === "production";
@@ -57,21 +42,8 @@ module.exports = env => {
     devtool: isProd ? false : "source-map",
     entry: {
       main: "./src/main.ts", // здесь подключим основные скрипты, роутинг, например
-      "state-management": "./src/state-management/index.ts",
-      ...storeInputs,
       ...pageInputs,
     },
-    externals: {
-      // в данных файлах обязательно указывать расширение
-      "state-management": `module ${base}state-management.${buildKey}.js`,
-      ...Object.fromEntries(
-        storeFiles.map(file => {
-          const key = file.replace(".js", "");
-          return [key, `module ${base}${key}.${buildKey}.js`];
-        }),
-      ),
-    },
-    externalsType: "module",
     experiments: {
       // работает только совместно со строкой library + scriptLoading
       outputModule: true,
@@ -181,7 +153,7 @@ module.exports = env => {
         scriptLoading: "module",
       }),
       new HtmlWebpackPlugin({
-        // сюда будем редиректить так же в случае динамических роутов, т.е.
+        // сюда будем редиректить так же в случае динамических роутов, т.к.
         // github использует адрес этой страницы для перенаправления по умолчанию
         filename: "404.html",
         template: "404.html",
