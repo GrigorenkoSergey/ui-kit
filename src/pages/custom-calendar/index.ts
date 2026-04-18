@@ -1,14 +1,16 @@
 import {CustomCalendar as CustomCalendarOrigin} from "@/components/custom-calendar";
 import fullyCustomizedCSS from "./fully-customized.css?raw";
+import additionalCss from "./additional.css?raw";
 import { assert } from "@/utils/assert";
 import "./style.css";
 
 const CustomCalendar = CustomCalendarOrigin.getConstructor();
 
 export default () => {
-  const additionalStyles = document.getElementById("additional-styles") as HTMLTemplateElement;
-  CustomCalendar.defaultStyles
-    .push(additionalStyles.content.cloneNode(true) as HTMLStyleElement);
+  const additionalSheet = new CSSStyleSheet();
+  additionalSheet.replaceSync(additionalCss);
+  CustomCalendar.defaultSheets = [...CustomCalendar.defaultSheets, additionalSheet];
+
   CustomCalendar.init();
 
   const basic = document.querySelector("[data-testid='basic']");

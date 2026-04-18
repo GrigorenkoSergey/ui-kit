@@ -51,6 +51,9 @@ const getDateString = (date: Date) => date.toLocaleDateString("en", {
   day: "2-digit",
 });
 
+const defaultSheet = new CSSStyleSheet();
+defaultSheet.replaceSync(css);
+
 // паттерн grid https://www.w3.org/WAI/ARIA/apg/patterns/grid/
 /**
  * @element custom-calendar
@@ -83,7 +86,9 @@ export class CustomCalendar extends HTMLElement {
   pendingUpdates = new Set<ObservedAttribute>();
   eventAttributes = new Set(["date"]);
 
-  static defaultStyles: (HTMLStyleElement | HTMLLinkElement)[] = [style];
+  // static defaultStyles: (HTMLStyleElement | HTMLLinkElement)[] = [style];
+
+  static defaultSheets = [defaultSheet];
 
   constructor() {
     super();
@@ -155,7 +160,7 @@ export class CustomCalendar extends HTMLElement {
 
   connectedCallback() {
     this.shadowRoot.innerHTML = template;
-    attachStyles2(this, CustomCalendar.defaultStyles);
+    this.shadowRoot.adoptedStyleSheets = CustomCalendar.defaultSheets;
 
     this.attachHandlers();
     this.setDefaultAttributes();

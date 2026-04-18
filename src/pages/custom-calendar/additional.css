@@ -1,0 +1,9 @@
+:host(.rect-cells) {
+
+  .date-cell,
+  .month-cell,
+  .year-cell,
+  button {
+    border-radius: 4px;
+  }
+}
