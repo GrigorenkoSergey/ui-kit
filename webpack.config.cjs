@@ -83,6 +83,7 @@ module.exports = env => {
           test: /(index|404)\.html$/i,
           loader: "html-loader",
           options: {
+            minimize: false,
             sources: {
               urlFilter: (attribute, value) => {
                 if (value === "./reset.css") return false;
@@ -101,6 +102,9 @@ module.exports = env => {
         {
           test: /template\.html$/i,
           loader: "html-loader",
+          options: {
+            minimize: false,
+          },
         },
         {
           test: /\.ts$/,
