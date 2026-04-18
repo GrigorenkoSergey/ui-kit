@@ -151,6 +151,7 @@ module.exports = env => {
         template: "./src/index.html",
         chunks: ["main"],
         scriptLoading: "module",
+        minify: false,
       }),
       new HtmlWebpackPlugin({
         // сюда будем редиректить так же в случае динамических роутов, т.к.
@@ -159,6 +160,7 @@ module.exports = env => {
         template: "404.html",
         chunks: ["main"],
         scriptLoading: "module",
+        minify: false,
       }),
       ...Object.entries(pageInputs).map(
         ([pageChunk, fullPath]) =>
@@ -169,6 +171,7 @@ module.exports = env => {
             chunks: ["main", pageChunk],
             // работает только совместно со строкой library + experiments
             scriptLoading: "module",
+            minify: false,
           }),
       ),
     ],
