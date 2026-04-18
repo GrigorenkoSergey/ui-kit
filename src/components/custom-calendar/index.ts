@@ -1,6 +1,6 @@
 import template from "./template.html";
 import css from "./style.css?raw";
-import { initCustomElement, attachStyles2 } from "@/utils/customElementHelpers";
+import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 
 // TODO можно вынести в хелперы
@@ -86,8 +86,6 @@ export class CustomCalendar extends HTMLElement {
   pendingUpdates = new Set<ObservedAttribute>();
   eventAttributes = new Set(["date"]);
 
-  // static defaultStyles: (HTMLStyleElement | HTMLLinkElement)[] = [style];
-
   static defaultSheets = [defaultSheet];
 
   constructor() {
@@ -160,7 +158,7 @@ export class CustomCalendar extends HTMLElement {
 
   connectedCallback() {
     this.shadowRoot.innerHTML = template;
-    this.shadowRoot.adoptedStyleSheets = CustomCalendar.defaultSheets;
+    this.shadowRoot.adoptedStyleSheets = this.constructor.getConstructor().defaultSheets;
 
     this.attachHandlers();
     this.setDefaultAttributes();

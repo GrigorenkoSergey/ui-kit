@@ -1,9 +1,5 @@
 /* Dialog */
 :host {
-  display: block;
-}
-
-.dialog {
   --bg-main: #2d333b;
   --bg-surface: #373e47;
   --border-color: #444c56;
@@ -14,6 +10,11 @@
   --focus-outline: #c8a2c8;
   --cell-width: 36px;
   --cell-height: 36px;
+
+  display: block;
+}
+
+.dialog {
 
   display: block;
   width: 320px;

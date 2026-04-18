@@ -1,17 +1,35 @@
 import {CustomCalendar as CustomCalendarOrigin} from "@/components/custom-calendar";
 import fullyCustomizedCSS from "./fully-customized.css?raw";
-import additionalCss from "./additional.css?raw";
 import { assert } from "@/utils/assert";
 import "./style.css";
 
 const CustomCalendar = CustomCalendarOrigin.getConstructor();
+CustomCalendar.init();
 
 export default () => {
-  const additionalSheet = new CSSStyleSheet();
-  additionalSheet.replaceSync(additionalCss);
-  CustomCalendar.defaultSheets = [...CustomCalendar.defaultSheets, additionalSheet];
+  const changeDefaultSheets = () => {
+    const additionalSheet = new CSSStyleSheet();
+    additionalSheet.replaceSync(`
+:host(.rect-cells) {
+  .date-cell,
+  .month-cell,
+  .year-cell,
+  button {
+    border-radius: 4px;
+  }
+}`);
+    if (CustomCalendar.defaultSheets.length === 1) {
+      CustomCalendar.defaultSheets = [CustomCalendar.defaultSheets[0], additionalSheet];
+    }
 
-  CustomCalendar.init();
+    const instances = document.querySelectorAll("custom-calendar");
+    instances.forEach(item => {
+      assert(item instanceof CustomCalendar);
+      item.shadowRoot.adoptedStyleSheets = CustomCalendar.defaultSheets;
+    });
+  };
+
+  changeDefaultSheets();
 
   const basic = document.querySelector("[data-testid='basic']");
   assert(basic instanceof CustomCalendar);
@@ -26,9 +44,10 @@ export default () => {
     return originalUpdateFunc.call(basic, ...args);
   };
 
-  const styleTag = document.createElement("style");
-  styleTag.textContent = fullyCustomizedCSS;
-
   const fullyCustomized = document.querySelector("[data-testid='styles-customized-full']");
-  fullyCustomized?.shadowRoot?.getElementById("default-style")?.replaceWith(styleTag);
+  assert(fullyCustomized instanceof CustomCalendar);
+
+  const fullyCustomizedSheet = new CSSStyleSheet();
+  fullyCustomizedSheet.replaceSync(fullyCustomizedCSS);
+  fullyCustomized.shadowRoot.adoptedStyleSheets = [fullyCustomizedSheet];
 };
