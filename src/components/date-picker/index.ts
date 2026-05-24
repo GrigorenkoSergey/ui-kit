@@ -3,6 +3,7 @@ import css from "./style.css?raw";
 import { initCustomElement, attachStyles2 } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 import { CustomCalendar } from "../custom-calendar";
+import { RushElement } from "../rush-element";
 
 const style = document.createElement("style");
 style.id = "default-style";
@@ -67,13 +68,13 @@ type ObservedAttribute = (typeof observedAttributes)[number];
  * @example
  * <date-picker date="04/12/2026"></date-picker>
  */
-export class DatePicker extends HTMLElement {
+export class DatePicker extends RushElement {
   [key: string]: unknown;
   ["constructor"]!: typeof DatePicker;
 
   shadowRoot!: ShadowRoot;
   internals;
-  pendingUpdates = new Set<ObservedAttribute>();
+  pendingUpdates = new Set<typeof this.constructor["observedAttributes"][number]>();
 
   static defaultStyles: (HTMLStyleElement | HTMLLinkElement)[] = [style];
   static formAssociated = true;
@@ -88,7 +89,6 @@ export class DatePicker extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({mode: "open"});
     this.internals = this.attachInternals();
   }
 

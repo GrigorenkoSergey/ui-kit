@@ -13,6 +13,7 @@ import {
   findById,
   replaceToCustomIds,
 } from "@/utils/customElementHelpers";
+import { RushElement } from "../rush-element";
 
 // TODO добавить крестик
 // TODO добавить видимость выбранного элемента в случае длинных списков (возможно, прокрутка к нему)
@@ -33,7 +34,7 @@ export interface CEvent extends CustomEvent {
   }
 }
 
-export class CustomAutocomplete extends HTMLElement {
+export class CustomAutocomplete extends RushElement {
   _isInnerAttrSet = false;
   _isRendered = false;
   _state;
@@ -48,8 +49,6 @@ export class CustomAutocomplete extends HTMLElement {
 
   constructor() {
     super();
-
-    this.attachShadow({ mode: "open" });
 
     // properties that will be synchronized with attributes
     this.open = this.hasAttribute("open");

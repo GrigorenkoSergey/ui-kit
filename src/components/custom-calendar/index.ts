@@ -2,6 +2,7 @@ import template from "./template.html";
 import css from "./style.css?raw";
 import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
+import { RushElement } from "../rush-element";
 
 // TODO можно вынести в хелперы
 const style = document.createElement("style");
@@ -78,9 +79,8 @@ defaultSheet.replaceSync(css);
  * @fires {CustomEvent<{ date: string }>} date-select - Fired on every user selection action (click or keyboard), regardless of whether the date value has changed.
  * @fires {CustomEvent<{ source: CustomCalendar, attribute: 'date', oldValue: string | null, newValue: string }>} change - Fired only when the `date` attribute's value actually changes.
  */
-export class CustomCalendar extends HTMLElement {
+export class CustomCalendar extends RushElement {
   [key: string]: unknown;
-  ["constructor"]!: typeof CustomCalendar;
 
   shadowRoot!: ShadowRoot;
   pendingUpdates = new Set<ObservedAttribute>();
@@ -90,7 +90,6 @@ export class CustomCalendar extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({mode: "open"});
   }
 
   /**
