@@ -1,12 +1,10 @@
 import { DatePicker } from "@/components/date-picker";
-import { CustomCalendar } from "@/components/custom-calendar";
 import "./style.css";
 import { assert } from "@/utils/assert";
+
+DatePicker.init();
   
 export default () => {
-  DatePicker.init();
-  CustomCalendar.init();
-
   const form = document.querySelector("#test-form");
   assert(form instanceof HTMLFormElement);
 

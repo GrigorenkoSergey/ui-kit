@@ -1,6 +1,5 @@
 export interface RushElementConstructor extends CustomElementConstructor {
-  new(): typeof RushElement;
-  getConstructor(): typeof RushElement;
+  new(): RushElementInterface;
   defaultSheets: CSSStyleSheet[];
   observedAttributes: string[];
 }
@@ -9,11 +8,10 @@ export interface RushElementInterface {
   shadowRoot: ShadowRoot;
   pendingUpdates: Set<string>
   eventAttributes: Set<string>
-  
 }
 
 export const RushElement = class extends HTMLElement implements RushElementInterface {
-  ["constructor"]!: typeof RushElement;
+  ["constructor"]!: RushElementConstructor;
 
   shadowRoot!: ShadowRoot;
   pendingUpdates = new Set<string>();
@@ -26,12 +24,14 @@ export const RushElement = class extends HTMLElement implements RushElementInter
 
   static defaultSheets: CSSStyleSheet[] = [];
   static observedAttributes: string[] = [];
-  static getConstructor() {
-    return RushElement;
-  }
 
   connectedCallback() {
-    this.shadowRoot.adoptedStyleSheets = this.constructor.getConstructor().defaultSheets;
+    const Ctor = customElements.get(this.localName) as RushElementConstructor | undefined;
+
+    if (Ctor?.defaultSheets) {
+      this.shadowRoot.adoptedStyleSheets = Ctor.defaultSheets;
+    }
+    
     this.attachHandlers();
     this.setDefaultAttributes();
     this.render();

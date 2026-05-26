@@ -4,11 +4,6 @@ import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 import { RushElement } from "../rush-element";
 
-// TODO можно вынести в хелперы
-const style = document.createElement("style");
-style.id = "default-style";
-style.textContent = css;
-
 const msInDay = 24 * 60 * 60 * 1000;
 
 const monthDates = (d: string) => {
@@ -87,11 +82,11 @@ export class CustomCalendar extends RushElement {
   eventAttributes = new Set(["date"]);
 
   static defaultSheets = [defaultSheet];
+  static observedAttributes = [...observedAttributes];
 
-  constructor() {
-    super();
+  static init() {
+    initCustomElement("custom-calendar", CustomCalendar);
   }
-
   /**
    * Возвращает "правильный" конструктор кастомного элемента.
    * Это решает проблему дублирования модулей, когда сборщики (напр. Webpack)
@@ -99,16 +94,15 @@ export class CustomCalendar extends RushElement {
    * Метод гарантирует, что мы всегда работаем с тем конструктором,
    * который был зарегистрирован в `customElements`.
    */
+
   static getConstructor(): typeof CustomCalendar {
     const result = customElements.get("custom-calendar") || CustomCalendar;
     return result as typeof CustomCalendar;
   }
 
-  static init() {
-    initCustomElement("custom-calendar", CustomCalendar);
+  constructor() {
+    super();
   }
-
-  static observedAttributes = [...observedAttributes];
 
   get view(): View {
     return this.getAttribute("view") as View || "dates";
@@ -157,37 +151,7 @@ export class CustomCalendar extends RushElement {
 
   connectedCallback() {
     this.shadowRoot.innerHTML = template;
-    this.shadowRoot.adoptedStyleSheets = this.constructor.getConstructor().defaultSheets;
-
-    this.attachHandlers();
-    this.setDefaultAttributes();
-
-    this.render();
-  }
-
-  attributeChangedCallback(
-    name: ObservedAttribute,
-    oldValue: string | boolean,
-    newValue: string | boolean,
-  ) {
-    if (oldValue === newValue) return;
-
-    this.pendingUpdates.add(name);
-
-    if (this.pendingUpdates.size <= 1) {
-      queueMicrotask(() => {
-        if (this.pendingUpdates.size) this.render();
-        this.pendingUpdates.clear();
-      });
-    }
-
-    if (this.eventAttributes.has(name)) {
-      this.dispatchEvent(new CustomEvent("change", { 
-        bubbles: true, 
-        composed: true,
-        detail: {source: this, attribute: name, oldValue, newValue},
-      }));
-    }
+    super.connectedCallback();
   }
 
   attachHandlers() {
