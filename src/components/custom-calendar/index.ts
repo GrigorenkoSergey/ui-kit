@@ -2,11 +2,7 @@ import template from "./template.html";
 import css from "./style.css?raw";
 import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
-
-// TODO можно вынести в хелперы
-const style = document.createElement("style");
-style.id = "default-style";
-style.textContent = css;
+import { createRushElement, RushElement } from "../rush-element";
 
 const msInDay = 24 * 60 * 60 * 1000;
 
@@ -78,19 +74,17 @@ defaultSheet.replaceSync(css);
  * @fires {CustomEvent<{ date: string }>} date-select - Fired on every user selection action (click or keyboard), regardless of whether the date value has changed.
  * @fires {CustomEvent<{ source: CustomCalendar, attribute: 'date', oldValue: string | null, newValue: string }>} change - Fired only when the `date` attribute's value actually changes.
  */
-export class CustomCalendar extends HTMLElement {
+export const CustomCalendar = createRushElement(class extends RushElement {
   [key: string]: unknown;
-  ["constructor"]!: typeof CustomCalendar;
 
-  shadowRoot!: ShadowRoot;
   pendingUpdates = new Set<ObservedAttribute>();
   eventAttributes = new Set(["date"]);
 
   static defaultSheets = [defaultSheet];
+  static observedAttributes = [...observedAttributes];
 
-  constructor() {
-    super();
-    this.attachShadow({mode: "open"});
+  static init() {
+    initCustomElement("custom-calendar", CustomCalendar);
   }
 
   /**
@@ -100,16 +94,15 @@ export class CustomCalendar extends HTMLElement {
    * Метод гарантирует, что мы всегда работаем с тем конструктором,
    * который был зарегистрирован в `customElements`.
    */
+
   static getConstructor(): typeof CustomCalendar {
     const result = customElements.get("custom-calendar") || CustomCalendar;
     return result as typeof CustomCalendar;
   }
 
-  static init() {
-    initCustomElement("custom-calendar", CustomCalendar);
+  constructor() {
+    super();
   }
-
-  static observedAttributes = [...observedAttributes];
 
   get view(): View {
     return this.getAttribute("view") as View || "dates";
@@ -158,37 +151,7 @@ export class CustomCalendar extends HTMLElement {
 
   connectedCallback() {
     this.shadowRoot.innerHTML = template;
-    this.shadowRoot.adoptedStyleSheets = this.constructor.getConstructor().defaultSheets;
-
-    this.attachHandlers();
-    this.setDefaultAttributes();
-
-    this.render();
-  }
-
-  attributeChangedCallback(
-    name: ObservedAttribute,
-    oldValue: string | boolean,
-    newValue: string | boolean,
-  ) {
-    if (oldValue === newValue) return;
-
-    this.pendingUpdates.add(name);
-
-    if (this.pendingUpdates.size <= 1) {
-      queueMicrotask(() => {
-        if (this.pendingUpdates.size) this.render();
-        this.pendingUpdates.clear();
-      });
-    }
-
-    if (this.eventAttributes.has(name)) {
-      this.dispatchEvent(new CustomEvent("change", { 
-        bubbles: true, 
-        composed: true,
-        detail: {source: this, attribute: name, oldValue, newValue},
-      }));
-    }
+    super.connectedCallback();
   }
 
   attachHandlers() {
@@ -556,7 +519,7 @@ export class CustomCalendar extends HTMLElement {
     }
   }
 
-  moveDateFocus(nextDate: Date, host: CustomCalendar) {
+  moveDateFocus(nextDate: Date, host: this) {
     const nextDateYear = nextDate.getFullYear();
     if (nextDateYear < host.minYear || nextDateYear > host.maxYear) return;
 
@@ -657,4 +620,6 @@ export class CustomCalendar extends HTMLElement {
       tablesContainer.style.setProperty(varName, "");
     }
   }
-}
+});
+
+export type CustomCalendar = InstanceType<typeof CustomCalendar>;

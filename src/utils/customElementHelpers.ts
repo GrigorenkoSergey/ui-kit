@@ -1,3 +1,5 @@
+import { RushElementConstructor } from "@/components/rush-element";
+
 const propToAttr = (prop: string) => prop.replace(/[A-Z]/g, m => `_${m.toLowerCase()}`);
 const attrToProp = (attr: string) => attr.replace(/_[A-Z]/g, m => `${m.toUpperCase()}`);
 
@@ -5,15 +7,16 @@ const attrToProp = (attr: string) => attr.replace(/_[A-Z]/g, m => `${m.toUpperCa
  * @param {String} name
  * @param {HTMLElement} constructor
  */
-export function initCustomElement(name: string, constructor: CustomElementConstructor) {
+// export function initCustomElement<C extends RushElementConstructor>(name: string, constructor: C) {
+export function initCustomElement<C extends RushElementConstructor>(name: string, constructor: C) {
   if (!customElements.get(name)) {
-    customElements.define(name, constructor);
+    customElements.define(name, constructor); 
   }
 }
 
 interface CustomElementConstructor {
   new(): CustomElementInstance;
-  observedAttributes?: string[],
+  observedAttributes: string[],
 }
 
 interface CustomElementInstance extends HTMLElement {
@@ -36,7 +39,7 @@ export function syncPropsWithAttrs(
   name: string,
   newValue: unknown,
 ) {
-  ctx.constructor.observedAttributes?.forEach(attr => {
+  ctx.constructor.observedAttributes?.forEach((attr: string) => {
     if (attr !== name) return;
 
     const propName = attrToProp(attr);

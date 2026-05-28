@@ -3,8 +3,8 @@ import fullyCustomizedCSS from "./fully-customized.css?raw";
 import { assert } from "@/utils/assert";
 import "./style.css";
 
+CustomCalendarOrigin.init();
 const CustomCalendar = CustomCalendarOrigin.getConstructor();
-CustomCalendar.init();
 
 export default () => {
   const changeDefaultSheets = () => {

@@ -1,12 +1,9 @@
 import template from "./template.html";
 import css from "./style.css?raw";
-import { initCustomElement, attachStyles2 } from "@/utils/customElementHelpers";
+import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 import { CustomCalendar } from "../custom-calendar";
-
-const style = document.createElement("style");
-style.id = "default-style";
-style.textContent = css;
+import { RushElement, createRushElement } from "../rush-element";
 
 const defaultMinYear = 1970;
 const defaultMaxYear = 2050;
@@ -36,7 +33,9 @@ const getDateString = (date: Date) => date.toLocaleDateString("en", {
 });
 
 const observedAttributes = ["disabled", "min-year", "max-year", "open", "date", "locale"] as const;
-type ObservedAttribute = (typeof observedAttributes)[number];
+
+const defaultSheet = new CSSStyleSheet();
+defaultSheet.replaceSync(css);
 
 /**
  * @element date-picker
@@ -67,17 +66,16 @@ type ObservedAttribute = (typeof observedAttributes)[number];
  * @example
  * <date-picker date="04/12/2026"></date-picker>
  */
-export class DatePicker extends HTMLElement {
+export const DatePicker = createRushElement(class extends RushElement {
   [key: string]: unknown;
-  ["constructor"]!: typeof DatePicker;
 
-  shadowRoot!: ShadowRoot;
   internals;
-  pendingUpdates = new Set<ObservedAttribute>();
-
-  static defaultStyles: (HTMLStyleElement | HTMLLinkElement)[] = [style];
-  static formAssociated = true;
+  pendingUpdates = new Set<typeof observedAttributes[number]>();
   eventAttributes = new Set(["date"]);
+
+  static defaultSheets = [defaultSheet];
+  static formAssociated = true;
+  static observedAttributes = [...observedAttributes];
 
   #nodes = {} as {
     yearInput: HTMLInputElement,
@@ -86,9 +84,18 @@ export class DatePicker extends HTMLElement {
     calendarIcon: HTMLButtonElement,
   };
 
+  static init() {
+    CustomCalendar.init();
+    initCustomElement("date-picker", DatePicker);
+  }
+
+  static getConstructor(): typeof DatePicker {
+    const result = customElements.get("date-picker") || DatePicker;
+    return result as typeof DatePicker;
+  }
+
   constructor() {
     super();
-    this.attachShadow({mode: "open"});
     this.internals = this.attachInternals();
   }
 
@@ -133,12 +140,6 @@ export class DatePicker extends HTMLElement {
   focus() {
     this.#nodes.yearInput.focus();
   }
-
-  static init() {
-    initCustomElement("date-picker", DatePicker);
-  }
-
-  static observedAttributes = [...observedAttributes];
 
   get form() {
     return this.internals.form;
@@ -202,39 +203,8 @@ export class DatePicker extends HTMLElement {
 
   connectedCallback() {
     this.shadowRoot.innerHTML = template;
-    attachStyles2(this, DatePicker.defaultStyles);
-
     this.cacheStaticNodes();
-    this.attachHandlers();
-    this.setDefaultAttributes();
-
-    this.render();
-  }
-
-  attributeChangedCallback(
-    name: ObservedAttribute,
-    oldValue: string | boolean,
-    newValue: string | boolean,
-  ) {
-    if (oldValue === newValue) return;
-
-    this.pendingUpdates.add(name);
-    if (this.pendingUpdates.size <= 1) {
-      queueMicrotask(() => {
-        if (this.pendingUpdates.size) this.render();
-        this.pendingUpdates.clear();
-      });
-    }
-
-    if (this.eventAttributes.has(name)) {
-      queueMicrotask(() => {
-        this.dispatchEvent(new CustomEvent("change", { 
-          bubbles: true, 
-          composed: true,
-          detail: {source: this, attribute: name, oldValue, newValue},
-        }));
-      });
-    }
+    super.connectedCallback();
   }
 
   cacheStaticNodes() {
@@ -323,7 +293,7 @@ export class DatePicker extends HTMLElement {
     calendar.date = getDateString(validDate);
 
     calendarWrapper.append(calendar);
-    calendar.shadowRoot.getElementById("ok")?.remove();
+    calendar.shadowRoot?.getElementById("ok")?.remove();
 
     const dateCell = calendar.shadowRoot?.
       getElementById("dates")?.
@@ -336,12 +306,12 @@ export class DatePicker extends HTMLElement {
     calendar.addEventListener("keydown", this.onCalendarKeydown.bind(this));
     calendar.addEventListener("date-select", this.onDateSelectionInCalendar as EventListener);
 
-    calendar.shadowRoot.getElementById("today")?. addEventListener("click", () => {
+    calendar.shadowRoot?.getElementById("today")?. addEventListener("click", () => {
       this.open = false;
       this.date = getDateString(new Date());
     });
 
-    calendar.shadowRoot.getElementById("cancel")?.addEventListener("click", () => {
+    calendar.shadowRoot?.getElementById("cancel")?.addEventListener("click", () => {
       this.open = false;
     });
 
@@ -636,4 +606,6 @@ export class DatePicker extends HTMLElement {
     this.#nodes.monthInput.disabled = isDisabled;
     this.#nodes.yearInput.disabled = isDisabled;
   }
-}
+});
+
+export type DatePicker = InstanceType<typeof DatePicker>;

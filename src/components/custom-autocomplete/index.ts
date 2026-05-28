@@ -6,7 +6,6 @@ import { generateIdInDocument } from "@/utils/generateIdInDocument";
 import { assert } from "@/utils/assert";
 import {
   syncAttrPropsWithState,
-  initCustomElement,
   applyGetSet,
   syncPropsWithAttrs,
   attachStyles,
@@ -50,7 +49,6 @@ export class CustomAutocomplete extends HTMLElement {
     super();
 
     this.attachShadow({ mode: "open" });
-
     // properties that will be synchronized with attributes
     this.open = this.hasAttribute("open");
     this.value = this.getAttribute("value") || "";
@@ -388,4 +386,6 @@ export class CustomAutocomplete extends HTMLElement {
   }
 }
 
-initCustomElement("custom-autocomplete", CustomAutocomplete);
+if (!customElements.get("custom-autocomplete")) {
+  customElements.define("custom-autocomplete", CustomAutocomplete); 
+}
