@@ -2,6 +2,8 @@ export interface RushElementConstructor extends CustomElementConstructor {
   new(): RushElementInterface;
   defaultSheets: CSSStyleSheet[];
   observedAttributes: string[];
+  init(): void;
+  getConstructor(): RushElementConstructor;
 }
 
 export interface RushElementInterface {
@@ -10,27 +12,24 @@ export interface RushElementInterface {
   eventAttributes: Set<string>
 }
 
-export const RushElement = class extends HTMLElement implements RushElementInterface {
-  ["constructor"]!: RushElementConstructor;
-
+export abstract class RushElement extends HTMLElement implements RushElementInterface {
   shadowRoot!: ShadowRoot;
-  pendingUpdates = new Set<string>();
-  eventAttributes = new Set<string>();
+
+  abstract pendingUpdates: Set<string>;
+  abstract eventAttributes: Set<string>;
+
+  abstract render(): void;
+  abstract attachHandlers(): void;
+  abstract setDefaultAttributes(): void;
 
   constructor() {
     super();
     this.attachShadow({mode: "open"});
   }
 
-  static defaultSheets: CSSStyleSheet[] = [];
-  static observedAttributes: string[] = [];
-
   connectedCallback() {
-    const Ctor = customElements.get(this.localName) as RushElementConstructor | undefined;
-
-    if (Ctor?.defaultSheets) {
-      this.shadowRoot.adoptedStyleSheets = Ctor.defaultSheets;
-    }
+    const ctor = customElements.get(this.localName) as RushElementConstructor;
+    this.shadowRoot.adoptedStyleSheets = ctor.defaultSheets;
     
     this.attachHandlers();
     this.setDefaultAttributes();
@@ -62,8 +61,8 @@ export const RushElement = class extends HTMLElement implements RushElementInter
       });
     }
   }
+}
 
-  render() {}
-  attachHandlers() {}
-  setDefaultAttributes() {}
-};
+export function createRushElement<T extends RushElementConstructor>(ctor: T): T {
+  return ctor;
+}

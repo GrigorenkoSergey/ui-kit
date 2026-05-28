@@ -2,7 +2,7 @@ import template from "./template.html";
 import css from "./style.css?raw";
 import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
-import { RushElement } from "../rush-element";
+import { createRushElement, RushElement } from "../rush-element";
 
 const msInDay = 24 * 60 * 60 * 1000;
 
@@ -74,10 +74,9 @@ defaultSheet.replaceSync(css);
  * @fires {CustomEvent<{ date: string }>} date-select - Fired on every user selection action (click or keyboard), regardless of whether the date value has changed.
  * @fires {CustomEvent<{ source: CustomCalendar, attribute: 'date', oldValue: string | null, newValue: string }>} change - Fired only when the `date` attribute's value actually changes.
  */
-export class CustomCalendar extends RushElement {
+export const CustomCalendar = createRushElement(class extends RushElement {
   [key: string]: unknown;
 
-  shadowRoot!: ShadowRoot;
   pendingUpdates = new Set<ObservedAttribute>();
   eventAttributes = new Set(["date"]);
 
@@ -87,6 +86,7 @@ export class CustomCalendar extends RushElement {
   static init() {
     initCustomElement("custom-calendar", CustomCalendar);
   }
+
   /**
    * Возвращает "правильный" конструктор кастомного элемента.
    * Это решает проблему дублирования модулей, когда сборщики (напр. Webpack)
@@ -519,7 +519,7 @@ export class CustomCalendar extends RushElement {
     }
   }
 
-  moveDateFocus(nextDate: Date, host: CustomCalendar) {
+  moveDateFocus(nextDate: Date, host: this) {
     const nextDateYear = nextDate.getFullYear();
     if (nextDateYear < host.minYear || nextDateYear > host.maxYear) return;
 
@@ -620,4 +620,6 @@ export class CustomCalendar extends RushElement {
       tablesContainer.style.setProperty(varName, "");
     }
   }
-}
+});
+
+export type CustomCalendar = InstanceType<typeof CustomCalendar>;

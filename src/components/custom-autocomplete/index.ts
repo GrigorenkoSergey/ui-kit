@@ -6,14 +6,12 @@ import { generateIdInDocument } from "@/utils/generateIdInDocument";
 import { assert } from "@/utils/assert";
 import {
   syncAttrPropsWithState,
-  initCustomElement,
   applyGetSet,
   syncPropsWithAttrs,
   attachStyles,
   findById,
   replaceToCustomIds,
 } from "@/utils/customElementHelpers";
-import { RushElement } from "../rush-element";
 
 // TODO добавить крестик
 // TODO добавить видимость выбранного элемента в случае длинных списков (возможно, прокрутка к нему)
@@ -34,7 +32,7 @@ export interface CEvent extends CustomEvent {
   }
 }
 
-export class CustomAutocomplete extends RushElement {
+export class CustomAutocomplete extends HTMLElement {
   _isInnerAttrSet = false;
   _isRendered = false;
   _state;
@@ -50,6 +48,7 @@ export class CustomAutocomplete extends RushElement {
   constructor() {
     super();
 
+    this.attachShadow({ mode: "open" });
     // properties that will be synchronized with attributes
     this.open = this.hasAttribute("open");
     this.value = this.getAttribute("value") || "";
@@ -387,4 +386,6 @@ export class CustomAutocomplete extends RushElement {
   }
 }
 
-initCustomElement("custom-autocomplete", CustomAutocomplete);
+if (!customElements.get("custom-autocomplete")) {
+  customElements.define("custom-autocomplete", CustomAutocomplete); 
+}

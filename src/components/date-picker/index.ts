@@ -3,7 +3,7 @@ import css from "./style.css?raw";
 import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 import { CustomCalendar } from "../custom-calendar";
-import { RushElement } from "../rush-element";
+import { RushElement, createRushElement } from "../rush-element";
 
 const defaultMinYear = 1970;
 const defaultMaxYear = 2050;
@@ -66,10 +66,9 @@ defaultSheet.replaceSync(css);
  * @example
  * <date-picker date="04/12/2026"></date-picker>
  */
-export class DatePicker extends RushElement {
+export const DatePicker = createRushElement(class extends RushElement {
   [key: string]: unknown;
 
-  shadowRoot!: ShadowRoot;
   internals;
   pendingUpdates = new Set<typeof observedAttributes[number]>();
   eventAttributes = new Set(["date"]);
@@ -88,6 +87,11 @@ export class DatePicker extends RushElement {
   static init() {
     CustomCalendar.init();
     initCustomElement("date-picker", DatePicker);
+  }
+
+  static getConstructor(): typeof DatePicker {
+    const result = customElements.get("date-picker") || DatePicker;
+    return result as typeof DatePicker;
   }
 
   constructor() {
@@ -602,4 +606,6 @@ export class DatePicker extends RushElement {
     this.#nodes.monthInput.disabled = isDisabled;
     this.#nodes.yearInput.disabled = isDisabled;
   }
-}
+});
+
+export type DatePicker = InstanceType<typeof DatePicker>;
