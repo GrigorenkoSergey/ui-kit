@@ -36,7 +36,9 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   #nodes = {} as {
     input: HTMLInputElement,
+    ul: HTMLUListElement,
   };
+  options: unknown[] = [];
 
   get open() {
     return this.hasAttribute("open");
@@ -44,6 +46,13 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   set open(value: boolean) {
     if (value) this.setAttribute("open", "");
     else this.removeAttribute("open");
+  }
+
+  get value() {
+    return this.getAttribute("value") || "";
+  }
+  set value(value: string) {
+    this.setAttribute("value", value);
   }
 
   constructor() {
@@ -68,22 +77,68 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     const input = this.shadowRoot.querySelector("input");
     assert(input instanceof HTMLInputElement);
     this.#nodes.input = input;
+
+    const ul = this.shadowRoot.querySelector("ul");
+    assert(ul instanceof HTMLUListElement);
+    this.#nodes.ul = ul;
   }
 
   render() {
+    if (this.pendingUpdates.has("value")) {
+      this.#nodes.input.value = this.value;
+    }
+
     if (this.pendingUpdates.has("open")) {
+      const isOpen = this.open;
+
       this.removeEventListener("blur", this.onBlur);
-      if (this.open) this.addEventListener("blur", this.onBlur);
+      this.ariaExpanded = String(isOpen);
+
+      if (isOpen) {
+        this.renderList();
+        this.addEventListener("blur", this.onBlur);
+      } else {
+        this.#nodes.ul.innerHTML = "";
+      }
     }
 
     this.pendingUpdates.clear();
   }
 
+  renderLi(item: unknown, index: number) {
+    const isSelected = item === this.value;
+
+    // tabindex="-1" is important for proper blur event handler
+    return `
+      <li 
+        id='option-${index}'
+        data-value='${item}' 
+        tabindex='${isSelected ? 0 : -1}'
+        ${isSelected ? "aria-selected='true'" : ""}
+        role='option'
+      >
+        ${item}
+      </li>`;
+  }
+
+  renderList() {
+    const lis = this.options.map((item, index) => this.renderLi(item, index));
+    this.#nodes.ul.innerHTML = lis.join("");
+  }
+
   onClick(event: MouseEvent) {
+    const {target} = event;
+    assert(target instanceof HTMLElement);
+
     const host = getHost(this);
 
-    if (event.target === host.#nodes.input) {
+    if (target === host.#nodes.input) {
       host.open = !host.open;
+    }
+
+    if (target.tagName === "LI") {
+      host.value = target.getAttribute("data-value") || "";
+      host.open = false;
     }
   }
 

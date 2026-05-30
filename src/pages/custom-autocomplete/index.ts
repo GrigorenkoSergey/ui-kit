@@ -10,17 +10,17 @@ export default () => {
   assert(basic instanceof CustomAutocomplete);
 
   const basicOptions = ["Опция-1", "Опция-2", "Опция-3", "Опция-4", "Опция-5"];
-  // basic.options(basicOptions);
+  basic.options = basicOptions;
 
-  //   const renderCount = document.querySelector("[data-testid='basic-renders-count']");
-  //   assert(renderCount);
+  const renderCount = document.querySelector("[data-testid='basic-renders-count']");
+  assert(renderCount);
 
-  //   const originalRender = basic.render;
-  //   basic.render = function (...args) {
-  //     const currentCount = +renderCount.textContent;
-  //     renderCount.textContent = String(currentCount + 1);
-  //     return originalRender.call(basic, ...args);
-  //   };
+  const originalRender = basic.render;
+  basic.render = function (...args) {
+    const currentCount = +renderCount.textContent;
+    renderCount.textContent = String(currentCount + 1);
+    return originalRender.call(basic, ...args);
+  };
 
   //   const withCustomizedLi = document.querySelector(".customized-li");
   //   const customizedOptions = [
