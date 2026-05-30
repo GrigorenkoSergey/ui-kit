@@ -8,9 +8,11 @@ import { createRushElement, RushElement } from "../rush-element";
 const defaultSheet = new CSSStyleSheet();
 defaultSheet.replaceSync(css);
 
-const observedAttributes = ["value", "open"] as const;
+const observedAttributes = ["value", "open", "pattern"] as const;
 type ObservedAttribute = typeof observedAttributes[number];
 const tagName = "custom-autocomplete";
+
+type Option = {value: string, label?: string};
 
 const getHost = (elem: Element) => {
   const host = (elem.getRootNode() as ShadowRoot).host;
@@ -38,7 +40,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     input: HTMLInputElement,
     ul: HTMLUListElement,
   };
-  options: unknown[] = [];
+  options: Option[] = [];
 
   get open() {
     return this.hasAttribute("open");
@@ -55,6 +57,13 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     this.setAttribute("value", value);
   }
 
+  get pattern() {
+    return this.getAttribute("pattern") || "";
+  }
+  set pattern(value: string) {
+    this.setAttribute("pattern", value);
+  }
+
   constructor() {
     super();
   }
@@ -67,6 +76,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   attachHandlers(): void {
     this.shadowRoot.addEventListener("click", this.onClick as EventListener);
+    this.#nodes.input.addEventListener("input", this.onInput as EventListener);
   }
 
   setDefaultAttributes(): void {
@@ -84,10 +94,6 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   render() {
-    if (this.pendingUpdates.has("value")) {
-      this.#nodes.input.value = this.value;
-    }
-
     if (this.pendingUpdates.has("open")) {
       const isOpen = this.open;
 
@@ -102,28 +108,49 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       }
     }
 
+    if (this.pendingUpdates.has("value")) {
+      this.#nodes.input.value = this.value;
+    }
+
+    if (this.pendingUpdates.has("pattern")) {
+      this.filterList();
+    }
+
+    if (this.open) this.markSelectedLi();
+
     this.pendingUpdates.clear();
   }
 
-  renderLi(item: unknown, index: number) {
-    const isSelected = item === this.value;
-
-    // tabindex="-1" is important for proper blur event handler
-    return `
-      <li 
-        id='option-${index}'
-        data-value='${item}' 
-        tabindex='${isSelected ? 0 : -1}'
-        ${isSelected ? "aria-selected='true'" : ""}
-        role='option'
-      >
-        ${item}
-      </li>`;
+  renderLi(option: Option, index: number) {
+    const {value, label = value} = option;
+    return `<li id='option-${index}' data-value='${value}' role='option' tabindex='-1'>${label}</li>`;
   }
 
   renderList() {
-    const lis = this.options.map((item, index) => this.renderLi(item, index));
+    const lis = this.options.map((option, index) => this.renderLi(option, index));
     this.#nodes.ul.innerHTML = lis.join("");
+  }
+
+  markSelectedLi() {
+    const value = this.value;
+
+    ([...this.#nodes.ul.children] as HTMLLIElement[]).forEach(li => {
+      const liValue = li.getAttribute("data-value");
+      const isSelected = liValue === value;
+
+      li.tabIndex = isSelected ? 0 : -1;
+      li.ariaSelected = isSelected ? "true" : "false";
+    });
+  }
+
+  filterList() {
+    const pattern = this.pattern;
+    [...this.#nodes.ul.children].forEach(li => {
+      const isMatch = pattern === "" ? true : li.textContent.toLowerCase().includes(pattern);
+
+      const elem = li as HTMLLIElement;
+      elem.hidden = !isMatch;
+    });
   }
 
   onClick(event: MouseEvent) {
@@ -145,6 +172,13 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   onBlur() {
     this.open = false;
     this.removeEventListener("blur", this.onBlur);
+  }
+
+  onInput() {
+    const host = getHost(this);
+    const newPattern = host.#nodes.input.value.toLowerCase();
+    host.pattern = newPattern;
+    if (newPattern === "") host.value = "";
   }
 },
 );

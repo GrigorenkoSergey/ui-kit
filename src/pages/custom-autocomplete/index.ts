@@ -9,7 +9,13 @@ export default () => {
   const basic = document.querySelector(".basic");
   assert(basic instanceof CustomAutocomplete);
 
-  const basicOptions = ["Опция-1", "Опция-2", "Опция-3", "Опция-4", "Опция-5"];
+  const basicOptions = [
+    {value: "Опция-1"}, 
+    {value: "Опция-2"},
+    {value: "Опция-3"},
+    {value: "Опция-4"}, 
+    {value: "Опция-5"},
+  ];
   basic.options = basicOptions;
 
   const renderCount = document.querySelector("[data-testid='basic-renders-count']");
