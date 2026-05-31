@@ -91,7 +91,9 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   setDefaultAttributes(): void {
-    
+    this.role = "combobox";
+    this.ariaHasPopup = "listbox";
+    this.setAttribute("aria-controls", "ul");
   }
 
   cacheStaticNodes() {

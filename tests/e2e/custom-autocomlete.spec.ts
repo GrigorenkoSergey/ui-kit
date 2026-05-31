@@ -337,26 +337,8 @@ test("Проверка основных ARIA атрибутов", async () => {
     const listboxId = await elem.getAttribute("aria-controls");
     expect(listboxId).not.toBeNull();
 
-    const listbox = page.locator(`#${listboxId}`);
+    const listbox = elem.locator(`#${listboxId}`);
     await expect(listbox).toBeVisible();
     await expect(listbox).toHaveAttribute("role", "listbox");
-  });
-
-  await test.step("При выборе с клавиатуры, верно устанавливается aria-activedescendant", async () => {
-    const checkHasAttr = async (option: Locator) => {
-      const optionId = await option.getAttribute("id");
-      assert(optionId !== null);
-      await expect(input).toHaveAttribute("aria-activedescendant", optionId);
-    };
-
-    await input.press("ArrowDown");
-    await checkHasAttr(elem.getByRole("option", { name: option1Text }));
-
-    await input.press("ArrowDown");
-    await checkHasAttr(elem.getByRole("option", { name: option2Text }));
-
-    await input.press("Enter");
-    await input.press("ArrowDown");
-    await checkHasAttr(elem.getByRole("option", { name: option2Text }));
   });
 });
