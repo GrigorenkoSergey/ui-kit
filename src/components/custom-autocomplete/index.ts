@@ -20,6 +20,16 @@ const getHost = (elem: Element) => {
   return host;
 };
 
+const getNextVisibleElement = (startPoint: Element | null, dir: 1 | -1) => {
+  if (!startPoint) return null;
+
+  const method = dir === 1 ? "nextElementSibling" : "previousElementSibling";
+  let next = startPoint[method];
+  while (next instanceof HTMLElement && next.hidden) next = next[method];
+
+  return next;
+};
+
 export const CustomAutocomplete = createRushElement(class extends RushElement {
   pendingUpdates: Set<ObservedAttribute> = new Set();
   eventAttributes: Set<string> = new Set();
@@ -194,14 +204,52 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
         if (host.open) host.open = false;
         return;
       }
-    }
 
+      case ("Tab"): {
+        if (host.open && host.value) {
+          const next = host.#nodes.ul.querySelector("li:not(hidden)[tabindex='0']");
+          if (next instanceof HTMLLIElement) {
+            next.classList.add("keyboard-focused");
+          }
+        }
+        return;
+      }
+
+      case ("Enter"): {
+        const focusedLi = host.#nodes.ul.querySelector("li.keyboard-focused");
+        if (focusedLi instanceof HTMLLIElement) {
+          focusedLi.click();
+        }
+      }
+    }
   }
 
   onArrowKeydown(event: KeyboardEvent) {
     event.preventDefault(); // so that the cursor does not move
 
     if (!this.open) return this.open = true;
+
+    const {key} = event;
+    const searchDirection = key === "ArrowDown" ? 1 : -1;
+    const ul = this.#nodes.ul;
+    const focusedLi = ul.querySelector("li.keyboard-focused");
+
+    let next;
+    if (focusedLi instanceof HTMLLIElement) {
+      next = getNextVisibleElement(focusedLi, searchDirection);
+    } else if (this.value) {
+      next = ul.querySelector("li:not(hidden)[tabindex='0']");
+    } else if (searchDirection === 1) {
+      next = ul.querySelector("li:not(hidden)");
+    } else {
+      const nonHiddenLis = [...ul.querySelectorAll("li:not(hidden)")];
+      next = nonHiddenLis[nonHiddenLis.length - 1];
+    }
+
+    if (next instanceof HTMLLIElement) {
+      focusedLi?.classList.remove("keyboard-focused");
+      next.classList.add("keyboard-focused");
+    }
   }
 },
 );
