@@ -77,6 +77,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   attachHandlers(): void {
     this.shadowRoot.addEventListener("click", this.onClick as EventListener);
     this.#nodes.input.addEventListener("input", this.onInput as EventListener);
+    this.shadowRoot.addEventListener("keydown", this.onKeydown as EventListener);
   }
 
   setDefaultAttributes(): void {
@@ -116,7 +117,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       this.filterList();
     }
 
-    if (this.open) this.markSelectedLi();
+    if (this.open) this.markSelectedLi(); // скорее всего проще закешировать ноду
 
     this.pendingUpdates.clear();
   }
@@ -179,6 +180,28 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     const newPattern = host.#nodes.input.value.toLowerCase();
     host.pattern = newPattern;
     if (newPattern === "") host.value = "";
+  }
+
+  onKeydown(event: KeyboardEvent) {
+    const host = getHost(this);
+    const { key } = event;
+
+    switch (key) {
+      case ("ArrowDown"):
+      case ("ArrowUp"): return host.onArrowKeydown(event);
+
+      case ("Escape"): {
+        if (host.open) host.open = false;
+        return;
+      }
+    }
+
+  }
+
+  onArrowKeydown(event: KeyboardEvent) {
+    event.preventDefault(); // so that the cursor does not move
+
+    if (!this.open) return this.open = true;
   }
 },
 );
