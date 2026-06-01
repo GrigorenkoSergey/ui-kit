@@ -14,12 +14,6 @@ const tagName = "custom-autocomplete";
 
 type Option = {value: string, label?: string};
 
-const getHost = (elem: Element) => {
-  const host = (elem.getRootNode() as ShadowRoot).host;
-  assert(host instanceof CustomAutocomplete);
-  return host;
-};
-
 const getNextVisibleElement = (startPoint: Element | null, dir: 1 | -1) => {
   if (!startPoint) return null;
 
@@ -85,9 +79,17 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   attachHandlers(): void {
-    this.shadowRoot.addEventListener("click", this.onClick as EventListener);
-    this.#nodes.input.addEventListener("input", this.onInput as EventListener);
-    this.shadowRoot.addEventListener("keydown", this.onKeydown as EventListener);
+    this.shadowRoot.addEventListener("click", this);
+    this.#nodes.input.addEventListener("input", this);
+    this.shadowRoot.addEventListener("keydown", this);
+  }
+
+  handleEvent(event: Event) {
+    switch (event.type) {
+      case ("click"): return this.onClick(event as MouseEvent);
+      case ("input"): return this.onInput();
+      case ("keydown"): return this.onKeydown(event as KeyboardEvent);
+    }
   }
 
   setDefaultAttributes(): void {
@@ -167,18 +169,16 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   onClick(event: MouseEvent) {
-    const {target} = event;
-    assert(target instanceof HTMLElement);
-
-    const host = getHost(this);
-
-    if (target === host.#nodes.input) {
-      host.open = !host.open;
+    const { target } = event;
+    if (!(target instanceof HTMLElement)) return;
+  
+    if (target === this.#nodes.input) {
+      this.open = !this.open;
     }
-
+  
     if (target.tagName === "LI") {
-      host.value = target.getAttribute("data-value") || "";
-      host.open = false;
+      this.value = target.getAttribute("data-value") || "";
+      this.open = false;
     }
   }
 
@@ -188,28 +188,26 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   onInput() {
-    const host = getHost(this);
-    const newPattern = host.#nodes.input.value.toLowerCase();
-    host.pattern = newPattern;
-    if (newPattern === "") host.value = "";
+    const newPattern = this.#nodes.input.value.toLowerCase();
+    this.pattern = newPattern;
+    if (newPattern === "") this.value = "";
   }
 
   onKeydown(event: KeyboardEvent) {
-    const host = getHost(this);
     const { key } = event;
 
     switch (key) {
       case ("ArrowDown"):
-      case ("ArrowUp"): return host.onArrowKeydown(event);
+      case ("ArrowUp"): return this.onArrowKeydown(event);
 
       case ("Escape"): {
-        if (host.open) host.open = false;
+        if (this.open) this.open = false;
         return;
       }
 
       case ("Tab"): {
-        if (host.open && host.value) {
-          const next = host.#nodes.ul.querySelector("li:not(hidden)[tabindex='0']");
+        if (this.open && this.value) {
+          const next = this.#nodes.ul.querySelector("li:not(hidden)[tabindex='0']");
           if (next instanceof HTMLLIElement) {
             next.classList.add("keyboard-focused");
           }
@@ -218,7 +216,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       }
 
       case ("Enter"): {
-        const focusedLi = host.#nodes.ul.querySelector("li.keyboard-focused");
+        const focusedLi = this.#nodes.ul.querySelector("li.keyboard-focused");
         if (focusedLi instanceof HTMLLIElement) {
           focusedLi.click();
         }
