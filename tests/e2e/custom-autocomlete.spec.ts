@@ -211,8 +211,7 @@ test("Навигация с клавиатуры", async () => {
   await test.step("При потере фокуса с элемента список закрывается", async () => {
     await elem.click();
     await checkIsOpen();
-    await page.keyboard.press("Tab"); // переход на выбранную строку
-    await page.keyboard.press("Tab"); // переход на следующий focusable элемент
+    await page.keyboard.press("Tab");
     await checkIsClosed();
   });
 });

@@ -78,6 +78,10 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     super.connectedCallback();
   }
 
+  disconnectedCallback(): void {
+    document.removeEventListener("click", this);
+  }
+
   attachHandlers(): void {
     this.shadowRoot.addEventListener("click", this);
     this.#nodes.input.addEventListener("input", this);
@@ -112,14 +116,16 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     if (this.pendingUpdates.has("open")) {
       const isOpen = this.open;
 
-      this.removeEventListener("blur", this.onBlur);
       this.ariaExpanded = String(isOpen);
 
       if (isOpen) {
         this.renderList();
-        this.addEventListener("blur", this.onBlur);
+        this.addEventListener("blur", this.onBlur, {once: true});
+        document.addEventListener("click", this);
       } else {
         this.#nodes.ul.innerHTML = "";
+        this.removeEventListener("blur", this.onBlur);
+        document.removeEventListener("click", this);
       }
     }
 
@@ -138,7 +144,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   renderLi(option: Option, index: number) {
     const {value, label = value} = option;
-    return `<li id='option-${index}' data-value='${value}' role='option' tabindex='-1'>${label}</li>`;
+    return `<li id='option-${index}' data-value='${value}' role='option'>${label}</li>`;
   }
 
   renderList() {
@@ -149,11 +155,9 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   markSelectedLi() {
     const value = this.value;
 
-    ([...this.#nodes.ul.children] as HTMLLIElement[]).forEach(li => {
+    [...this.#nodes.ul.children].forEach(li => {
       const liValue = li.getAttribute("data-value");
       const isSelected = liValue === value;
-
-      li.tabIndex = isSelected ? 0 : -1;
       li.ariaSelected = isSelected ? "true" : "false";
     });
   }
@@ -169,6 +173,11 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   onClick(event: MouseEvent) {
+    if (!event.composedPath().includes(this)) {
+      this.open = false;
+      return;
+    }
+
     const { target } = event;
     if (!(target instanceof HTMLElement)) return;
   
@@ -182,9 +191,8 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     }
   }
 
-  onBlur() {
-    this.open = false;
-    this.removeEventListener("blur", this.onBlur);
+  onBlur(event: FocusEvent) {
+    if (event.relatedTarget) this.open = false;
   }
 
   onInput() {
@@ -202,16 +210,6 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
       case ("Escape"): {
         if (this.open) this.open = false;
-        return;
-      }
-
-      case ("Tab"): {
-        if (this.open && this.value) {
-          const next = this.#nodes.ul.querySelector("li:not(hidden)[tabindex='0']");
-          if (next instanceof HTMLLIElement) {
-            next.classList.add("keyboard-focused");
-          }
-        }
         return;
       }
 
@@ -238,7 +236,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     if (focusedLi instanceof HTMLLIElement) {
       next = getNextVisibleElement(focusedLi, searchDirection);
     } else if (this.value) {
-      next = ul.querySelector("li:not(hidden)[tabindex='0']");
+      next = ul.querySelector(`li[data-value='${this.value}']`);
     } else if (searchDirection === 1) {
       next = ul.querySelector("li:not(hidden)");
     } else {
