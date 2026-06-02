@@ -44,7 +44,17 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     input: HTMLInputElement,
     ul: HTMLUListElement,
   };
-  options: Option[] = [];
+
+  #options: Option[] = [];
+
+  set options(options: Option[]) {
+    this.#options = options;
+    const lis = options.map((option, index) => this.renderLi(option, index));
+    this.#nodes.ul.replaceChildren(...lis);
+  }
+  get options() {
+    return this.#options;
+  }
 
   get open() {
     return this.hasAttribute("open");
@@ -119,11 +129,9 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       this.ariaExpanded = String(isOpen);
 
       if (isOpen) {
-        this.renderList();
         this.addEventListener("blur", this.onBlur, {once: true});
         document.addEventListener("click", this);
       } else {
-        this.#nodes.ul.innerHTML = "";
         this.removeEventListener("blur", this.onBlur);
         document.removeEventListener("click", this);
       }
@@ -144,12 +152,14 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   renderLi(option: Option, index: number) {
     const {value, label = value} = option;
-    return `<li id='option-${index}' data-value='${value}' role='option'>${label}</li>`;
-  }
 
-  renderList() {
-    const lis = this.options.map((option, index) => this.renderLi(option, index));
-    this.#nodes.ul.innerHTML = lis.join("");
+    const li = document.createElement("li");
+    li.id = `option-${index}`;
+    li.setAttribute("data-value", value);
+    li.role = "option";
+    li.textContent = label || value;
+
+    return li;
   }
 
   markSelectedLi() {
