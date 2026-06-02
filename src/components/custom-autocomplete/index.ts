@@ -14,14 +14,11 @@ const tagName = "custom-autocomplete";
 
 type Option = {value: string, label?: string};
 
-const getNextVisibleElement = (startPoint: Element | null, dir: 1 | -1) => {
+const getNextElement = (startPoint: Element | null, dir: 1 | -1) => {
   if (!startPoint) return null;
 
   const method = dir === 1 ? "nextElementSibling" : "previousElementSibling";
-  let next = startPoint[method];
-  while (next instanceof HTMLElement && next.hidden) next = next[method];
-
-  return next;
+  return startPoint[method];
 };
 
 export const CustomAutocomplete = createRushElement(class extends RushElement {
@@ -49,8 +46,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   set options(options: Option[]) {
     this.#options = options;
-    const lis = options.map((option, index) => this.renderLi(option, index));
-    this.#nodes.ul.replaceChildren(...lis);
+    this.renderList(options);
   }
   get options() {
     return this.#options;
@@ -162,6 +158,11 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     return li;
   }
 
+  renderList(options: Option[]) {
+    const lis = options.map((option, index) => this.renderLi(option, index));
+    this.#nodes.ul.replaceChildren(...lis);
+  }
+
   markSelectedLi() {
     const value = this.value;
 
@@ -174,12 +175,11 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   filterList() {
     const pattern = this.pattern;
-    [...this.#nodes.ul.children].forEach(li => {
-      const isMatch = pattern === "" ? true : li.textContent.toLowerCase().includes(pattern);
+    const filteredOptions = pattern ?
+      this.options.filter(({value, label = value}) => label.toLowerCase().includes(pattern)) :
+      this.options;
 
-      const elem = li as HTMLLIElement;
-      elem.hidden = !isMatch;
-    });
+    this.renderList(filteredOptions);
   }
 
   onClick(event: MouseEvent) {
@@ -244,14 +244,13 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
     let next;
     if (focusedLi instanceof HTMLLIElement) {
-      next = getNextVisibleElement(focusedLi, searchDirection);
+      next = getNextElement(focusedLi, searchDirection);
     } else if (this.value) {
       next = ul.querySelector(`li[data-value='${this.value}']`);
     } else if (searchDirection === 1) {
-      next = ul.querySelector("li:not(hidden)");
+      next = ul.firstChild;
     } else {
-      const nonHiddenLis = [...ul.querySelectorAll("li:not(hidden)")];
-      next = nonHiddenLis[nonHiddenLis.length - 1];
+      next = ul.lastChild;
     }
 
     if (next instanceof HTMLLIElement) {
