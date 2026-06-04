@@ -14,13 +14,6 @@ const tagName = "custom-autocomplete";
 
 type Option = {value: string, label?: string};
 
-const getNextElement = (startPoint: Element | null, dir: 1 | -1) => {
-  if (!startPoint) return null;
-
-  const method = dir === 1 ? "nextElementSibling" : "previousElementSibling";
-  return startPoint[method];
-};
-
 export const CustomAutocomplete = createRushElement(class extends RushElement {
   pendingUpdates: Set<ObservedAttribute> = new Set();
   eventAttributes: Set<string> = new Set();
@@ -41,6 +34,8 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     input: HTMLInputElement,
     ul: HTMLUListElement,
   };
+
+  #activeDescendantIndex: number = -1;
 
   #options: Option[] = [];
 
@@ -130,6 +125,9 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       } else {
         this.removeEventListener("blur", this.onBlur);
         document.removeEventListener("click", this);
+        this.#nodes.ul.children[this.#activeDescendantIndex]
+          ?.classList.remove("keyboard-focused");
+        this.#activeDescendantIndex = -1;
       }
     }
 
@@ -141,7 +139,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       this.filterList();
     }
 
-    if (this.open) this.markSelectedLi(); // скорее всего проще закешировать ноду
+    if (this.open) this.markSelectedLi();
 
     this.pendingUpdates.clear();
   }
@@ -240,24 +238,27 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     const {key} = event;
     const searchDirection = key === "ArrowDown" ? 1 : -1;
     const ul = this.#nodes.ul;
-    const focusedLi = ul.querySelector("li.keyboard-focused");
 
-    let next;
-    if (focusedLi instanceof HTMLLIElement) {
-      next = getNextElement(focusedLi, searchDirection);
-    } else if (this.value) {
-      next = ul.querySelector(`li[data-value='${this.value}']`);
-    } else if (searchDirection === 1) {
-      next = ul.firstChild;
-    } else {
-      next = ul.lastChild;
-    }
+    const curIndex = this.#activeDescendantIndex;
+    ul.children[curIndex]?.classList.remove("keyboard-focused");
 
-    if (next instanceof HTMLLIElement) {
-      focusedLi?.classList.remove("keyboard-focused");
-      next.classList.add("keyboard-focused");
-      this.#nodes.input.setAttribute("aria-activedescendant", next.id);
-    }
+    const newIndex = curIndex === -1 ? 
+      searchDirection === 1 ? 0 : ul.children.length - 1 :
+      Math.min(
+        Math.max(0, this.#activeDescendantIndex + searchDirection),
+        ul.children.length - 1, 
+      );
+
+    const nextEl = ul.children[newIndex];
+    nextEl.classList.add("keyboard-focused");
+    this.#nodes.input.setAttribute("aria-activedescendant", nextEl.id);
+    this.#activeDescendantIndex = newIndex;
+
+    this.addEventListener("pointermove", this.onPointerMove, {once: true});
+  }
+
+  onPointerMove() {
+    this.#nodes.ul.children[this.#activeDescendantIndex]?.classList.remove("keyboard-focused");
   }
 },
 );

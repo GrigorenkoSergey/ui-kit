@@ -184,6 +184,41 @@ test("Навигация с клавиатуры", async () => {
 
     await input.press("Escape");
     await expect(elem).toHaveAttribute("aria-expanded", "false");
+
+    await input.press("ArrowUp");
+    await expect(elem).toHaveAttribute("aria-expanded", "true");
+
+    await input.press("Escape");
+    await expect(elem).toHaveAttribute("aria-expanded", "false");
+  });
+
+  await test.step("Выделение крайних элементов списка", async () => {
+    await input.press("ArrowDown");
+    await input.press("ArrowDown");
+    await expect(elem.getByRole("option").first()).toHaveClass(/keyboard-focused/);
+    await input.press("Escape");
+
+    await expect(elem).toHaveAttribute("aria-expanded", "false");
+
+    await input.press("ArrowUp");
+    await input.press("ArrowUp");
+    await expect(elem.getByRole("option").last()).toHaveClass(/keyboard-focused/);
+    await input.press("Escape");
+
+    await expect(elem).toHaveAttribute("aria-expanded", "false");
+  });
+
+  await test.step("Классы верно сбрасываются при закрытии", async () => {
+    await input.click();
+    await input.press("ArrowUp");
+    await expect(elem.getByRole("option").last()).toHaveClass(/keyboard-focused/);
+
+    await input.press("Escape");
+    await input.press("ArrowDown");
+    await input.press("ArrowDown");
+    await expect(elem.getByRole("option").first()).toHaveClass(/keyboard-focused/);
+    await expect(elem.getByRole("option").last()).not.toHaveClass(/keyboard-focused/);
+    await input.press("Escape");
   });
 
   await test.step("Перемещение по списку вниз", async () => {
