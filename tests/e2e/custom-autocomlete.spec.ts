@@ -241,6 +241,17 @@ test("Навигация с клавиатуры", async () => {
     await page.keyboard.press("Tab");
     await checkIsClosed();
   });
+
+  await test.step("При наличии выбранного элемента навигация начинается с него", async () => {
+    await elem.click();
+    await page.getByRole("option").nth(2).click();
+    await elem.press("Escape");
+    await checkIsClosed();
+
+    await elem.click();
+    await input.press("ArrowDown");
+    await expect(page.getByRole("option").nth(3)).toHaveClass(/keyboard-focused/);
+  });
 });
 
 test("При нажатии на стрелки клавиатуры при отсутствии элементов для выбора рендер не происходит", async () => {
