@@ -125,9 +125,13 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       } else {
         this.removeEventListener("blur", this.onBlur);
         document.removeEventListener("click", this);
+
         this.#nodes.ul.children[this.#activeDescendantIndex]
           ?.classList.remove("keyboard-focused");
         this.#activeDescendantIndex = -1;
+
+        this.pattern = "";
+        this.#nodes.input.value = this.value;
       }
     }
 
@@ -189,8 +193,9 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     const { target } = event;
     if (!(target instanceof HTMLElement)) return;
   
-    if (target === this.#nodes.input) {
-      this.open = !this.open;
+    if (target === this.#nodes.input && !this.open) {
+      this.open = true;
+      return;
     }
   
     if (target.tagName === "LI") {
@@ -222,10 +227,8 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       }
 
       case ("Enter"): {
-        const focusedLi = this.#nodes.ul.querySelector("li.keyboard-focused");
-        if (focusedLi instanceof HTMLLIElement) {
-          focusedLi.click();
-        }
+        const focusedLi = this.#nodes.ul.children[this.#activeDescendantIndex];
+        if (focusedLi instanceof HTMLLIElement) focusedLi.click();
       }
     }
   }

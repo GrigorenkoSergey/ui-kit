@@ -82,25 +82,6 @@ test("Простой выбор опций", async () => {
 test("Открытие-закрытие по клику", async () => {
   let expectedRenders = 0;
 
-  await test.step("Открытие по клику", async () => {
-    await elem.click();
-    expectedRenders += 1;
-    await checkIsOpen();
-    await checkExpectedRendersCount(expectedRenders);
-  });
-
-  await test.step("Закрытие по повторному клику на поле ввода", async () => {
-    await elem.click();
-    expectedRenders += 1;
-    await checkIsClosed();
-    await checkExpectedRendersCount(expectedRenders);
-  });
-
-  await test.step("Нет лишнего рендера по клику снаружи после закрытия", async () => {
-    await page.getByTestId("basic-section-title").click();
-    await checkExpectedRendersCount(expectedRenders);
-  });
-
   await test.step("Открытие по клику, закрытие по клику вне элемента", async () => {
     await elem.click();
     expectedRenders += 1;
@@ -148,6 +129,17 @@ test("Фильтрация по вводу", async () => {
   await test.step("При сбросе фильтрации (удалении ввода) список отображается полностью", async () => {
     await input.fill("");
     await expect(elem.getByRole("option")).toHaveCount(totalOptionsCount);
+  });
+
+  await test.step("При частичном удалении символа в уже выбранной опции при сбросе потере фокуса ввод восстанавливается", async () => {
+    await page.getByRole("option").first().click();
+    await expect(input).toHaveValue("Опция-1");
+    await input.click();
+    await input.press("Backspace");
+    await expect(input).toHaveValue("Опция-");
+
+    await input.press("Escape");
+    await expect(input).toHaveValue("Опция-1");
   });
 });
 
@@ -285,7 +277,7 @@ test("Изменения атрибутов снаружи", async () => {
     await checkExpectedRendersCount(expectedRenders);
   });
 
-  await elem.click();
+  await elem.press("Escape");
   expectedRenders += 1;
 
   await test.step("Смена open", async () => {
@@ -329,7 +321,7 @@ test("Изменения опций снаружи", async () => {
     await checkExpectedRendersCount(expectedRenders);
   });
 
-  await elem.click();
+  await elem.press("Escape");
   expectedRenders += 1;
 
   await test.step("Смена open", async () => {
