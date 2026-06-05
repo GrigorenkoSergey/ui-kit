@@ -8,6 +8,8 @@
   --item-hover-background-color: green;
   --item-focused-outline: 1px solid;
   --dropdown-z-index: 100;
+
+  --border-radius: 8px;
 }
 
 :host([hidden]) {
@@ -27,14 +29,42 @@
 .input-wrapper {
   display: flex;
   align-items: center;
+  position: relative;
+
+  &:focus-within {
+    fieldset {
+      border-width: 2px;
+    }
+
+    legend {
+      margin-inline: 0;
+    }
+  }
 }
 
 input {
   display: block;
-  padding: 8px;
-  font-size: 16px;
+  padding: 12px;
+  font-size: 1rem;
   width: 100%;
   cursor: pointer;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+
+fieldset {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border: 1px solid;
+  top: -12px;
+  pointer-events: none;
+  border-radius: var(--border-radius);
+}
+
+legend {
+  margin-inline: 1px;
 }
 
 ul {
@@ -46,6 +76,7 @@ ul {
   width: 100%;
   display: none;
   z-index: var(--dropdown-z-index);
+  border-radius: var(--border-radius);
 }
 
 li {
