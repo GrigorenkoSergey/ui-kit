@@ -1,6 +1,13 @@
 :host {
   display: block;
   position: relative;
+
+  --dropdown-background-color: rgb(117 177 164);
+  --item-selected-background-color: orange;
+  --item-keyboard-focused-background-color: red;
+  --item-hover-background-color: green;
+  --item-focused-outline: 1px solid;
+  --dropdown-z-index: 100;
 }
 
 :host([hidden]) {
@@ -34,11 +41,11 @@ ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  background: rgb(117 177 164);
+  background: var(--dropdown-background-color);
   position: absolute;
   width: 100%;
   display: none;
-  z-index: 100;
+  z-index: var(--dropdown-z-index);
 }
 
 li {
@@ -48,7 +55,7 @@ li {
   cursor: pointer;
 
   &[aria-selected="true"] {
-    background-color: orange;
+    background-color: var(--item-selected-background-color);
   }
 
   &[hidden] {
@@ -56,12 +63,12 @@ li {
   }
 
   &.keyboard-focused {
-    background-color: red;
-    outline: 1px solid;
+    background-color: var(--item-keyboard-focused-background-color);
+    outline: var(--item-focused-outline);
   }
 
   &:hover {
-    background-color: green
+    background-color: var(--item-hover-background-color);
   }
 }
 
