@@ -55,10 +55,13 @@ li {
     display: none;
   }
 
-  ul:not(:has(.keyboard-focused)) &:hover,
   &.keyboard-focused {
     background-color: red;
     outline: 1px solid;
+  }
+
+  &:hover {
+    background-color: green
   }
 }
 

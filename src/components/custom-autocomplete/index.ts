@@ -261,12 +261,6 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
       nextEl.classList.add("keyboard-focused");
       this.#nodes.input.setAttribute("aria-activedescendant", nextEl.id);
       this.#activeDescendantIndex = newIndex;
-      this.addEventListener("pointermove", this.onPointerMove, {once: true});
     }
   }
-
-  onPointerMove() {
-    this.#nodes.ul.children[this.#activeDescendantIndex]?.classList.remove("keyboard-focused");
-  }
-},
-);
+});
