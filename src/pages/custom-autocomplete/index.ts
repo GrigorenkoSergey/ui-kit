@@ -28,37 +28,43 @@ export default () => {
     return originalRender.call(basic, ...args);
   };
 
-  //   const withCustomizedLi = document.querySelector(".customized-li");
-  //   const customizedOptions = [
-  //     {
-  //       value: "Винни-Пух",
-  //       wiki: "https://en.wikipedia.org/wiki/Winnie-the-Pooh",
-  //     },
-  //     {
-  //       value: "Пятачок",
-  //       wiki: "https://en.wikipedia.org/wiki/Piglet_(Winnie-the-Pooh)",
-  //     },
-  //     {
-  //       value: "Иа",
-  //       wiki: "https://en.wikipedia.org/wiki/Eeyore",
-  //     },
-  //     {
-  //       value: "Сова",
-  //       wiki: "https://en.wikipedia.org/wiki/Owl_(Winnie-the-Pooh)",
-  //     },
-  //     {
-  //       value: "Кролик",
-  //       wiki: "https://en.wikipedia.org/wiki/Rabbit_(Winnie-the-Pooh)",
-  //     },
-  //   ];
+  const withCustomizedLi = document.querySelector(".customized-li");
+  const customizedOptions = [
+    {
+      value: "Винни-Пух",
+      wiki: "https://en.wikipedia.org/wiki/Winnie-the-Pooh",
+    },
+    {
+      value: "Пятачок",
+      wiki: "https://en.wikipedia.org/wiki/Piglet_(Winnie-the-Pooh)",
+    },
+    {
+      value: "Иа",
+      wiki: "https://en.wikipedia.org/wiki/Eeyore",
+    },
+    {
+      value: "Сова",
+      wiki: "https://en.wikipedia.org/wiki/Owl_(Winnie-the-Pooh)",
+    },
+    {
+      value: "Кролик",
+      wiki: "https://en.wikipedia.org/wiki/Rabbit_(Winnie-the-Pooh)",
+    },
+  ];
 
-  //   assert(withCustomizedLi instanceof CustomAutocomplete);
-  //   withCustomizedLi.renderLi = (li: typeof customizedOptions[number]) => `\
-  // <li part="li" data-value=${li.value}>${li.value} <a href=${li.wiki} 
-  //     target="_blank"
-  //     part="link">?</a>
-  // </li>
-  // `;
+  assert(withCustomizedLi instanceof CustomAutocomplete);
 
-//   withCustomizedLi.setOptions(customizedOptions);
+  withCustomizedLi.renderLi = (option: typeof customizedOptions[number], index: number) => {
+    const {value, wiki} = option;
+
+    const li = document.createElement("li");
+    li.setAttribute("data-value", value);
+    li.innerHTML = `${value} <a href="${wiki}" target="_blank" part="link">?</a>`;
+    li.id = `option-${index}`;
+    li.role = "option";
+
+    return li;
+  };
+
+  withCustomizedLi.options = customizedOptions;
 };

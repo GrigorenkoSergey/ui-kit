@@ -75,6 +75,10 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   connectedCallback(): void {
     this.shadowRoot.innerHTML = template;
+
+    const legend = this.shadowRoot.querySelector("legend");
+    if (legend) legend.textContent = this.getAttribute("label") || "Legend";
+
     this.cacheStaticNodes(); 
     super.connectedCallback();
   }
