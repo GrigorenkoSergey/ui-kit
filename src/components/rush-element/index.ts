@@ -1,5 +1,6 @@
 export interface RushElementConstructor extends CustomElementConstructor {
   new(): RushElementInterface;
+  defaultTemplate: string,
   defaultSheets: CSSStyleSheet[];
   observedAttributes: string[];
   init(): void;
@@ -25,12 +26,13 @@ export abstract class RushElement extends HTMLElement implements RushElementInte
   constructor() {
     super();
     this.attachShadow({mode: "open"});
+
+    const ctor = customElements.get(this.localName) as RushElementConstructor;
+    this.shadowRoot.adoptedStyleSheets = ctor.defaultSheets;
+    this.shadowRoot.innerHTML = ctor.defaultTemplate;
   }
 
   connectedCallback() {
-    const ctor = customElements.get(this.localName) as RushElementConstructor;
-    this.shadowRoot.adoptedStyleSheets = ctor.defaultSheets;
-    
     this.attachHandlers();
     this.setDefaultAttributes();
     this.render();

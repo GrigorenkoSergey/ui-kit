@@ -18,6 +18,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   pendingUpdates: Set<ObservedAttribute> = new Set();
   eventAttributes: Set<string> = new Set();
 
+  static defaultTemplate = template;
   static defaultSheets = [defaultSheet];
   static observedAttributes = [...observedAttributes];
 
@@ -25,7 +26,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     initCustomElement(tagName, CustomAutocomplete);
   }
 
-  static getConstructor() {
+  static getConstructor() { // TODO попробовать упростить это
     const result = customElements.get(tagName) || CustomAutocomplete;
     return result as typeof CustomAutocomplete;
   }
@@ -74,8 +75,6 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   connectedCallback(): void {
-    this.shadowRoot.innerHTML = template;
-
     this.cacheStaticNodes(); 
     super.connectedCallback();
   }
