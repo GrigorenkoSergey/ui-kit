@@ -10,6 +10,8 @@
   --dropdown-z-index: 100;
 
   --border-radius: 8px;
+
+  --max-height: 240px;
 }
 
 :host([hidden]) {
@@ -30,6 +32,8 @@
   display: flex;
   align-items: center;
   position: relative;
+  /* связано с top у fieldset */
+  margin-top: 12px;
 
   &:focus-within {
     fieldset {
@@ -77,6 +81,8 @@ ul {
   display: none;
   z-index: var(--dropdown-z-index);
   border-radius: var(--border-radius);
+  max-height: var(--max-height);
+  overflow: auto;
 }
 
 li {

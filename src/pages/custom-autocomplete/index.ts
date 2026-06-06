@@ -28,6 +28,10 @@ export default () => {
     return originalRender.call(basic, ...args);
   };
 
+  const withLongList = document.querySelector(".long-list");
+  assert(withLongList instanceof CustomAutocomplete);
+  withLongList.options = Array.from({length: 1000}, (_, i) => ({value: `Опция-${i}`}));
+
   const withCustomizedLi = document.querySelector(".customized-li");
   const customizedOptions = [
     {

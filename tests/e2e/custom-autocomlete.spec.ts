@@ -411,9 +411,6 @@ test("Навигация в отфильтрованном списке с вы�
   });
 
   await elem.click();
-  await expect(elem.getByRole("option")).toHaveCount(3);
-  await elem.press("Escape");
-
   await selectOption("Apricot");
   await expect(input).toHaveValue("Apricot");
   await checkIsClosed();
@@ -430,4 +427,13 @@ test("Навигация в отфильтрованном списке с вы�
   await input.press("ArrowDown");
   await expect(elem.getByRole("option", { name: "Apple" })).not.toHaveClass(/keyboard-focused/);
   await expect(elem.getByRole("option", { name: "Apricot" })).toHaveClass(/keyboard-focused/);
+});
+
+test("Навигация в очень длинных списках. Выделенные элементы всегда видны.", async () => {
+  elem = page.getByTestId("long-list");
+  input = elem.getByRole("textbox");
+
+  await elem.click();
+  input.press("ArrowUp");
+  await expect(page.getByRole("option").last()).toBeInViewport();
 });

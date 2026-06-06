@@ -261,6 +261,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
     const nextEl = items[newIndex];
     if (nextEl) {
+      nextEl.scrollIntoView({ block: "nearest", inline: "nearest" });
       nextEl.classList.add("keyboard-focused");
       this.#nodes.input.setAttribute("aria-activedescendant", nextEl.id);
       this.#activeDescendantIndex = newIndex;

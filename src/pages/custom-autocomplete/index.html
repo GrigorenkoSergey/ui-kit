@@ -10,6 +10,7 @@
       <li><b>value</b> - выбранное значение в поле ввода</li>
     </ul>
   </section>
+
   <section>
     <h3 data-testid="basic-section-title">Базовый вариант</h3>
 
@@ -31,6 +32,13 @@ autocomplete.options = [
       </custom-autocomplete>
       <span>Кол-во рендеров: <span data-testid="basic-renders-count">0</span></span>
     </div>
+  </section>
+
+  <section>
+    <h3>Много много элементов..</h3>
+    <custom-autocomplete class="long-list" name="long-list" data-testid="long-list">
+      <span slot="label">Длинный список</span>
+    </custom-autocomplete>
   </section>
 
   <section>
