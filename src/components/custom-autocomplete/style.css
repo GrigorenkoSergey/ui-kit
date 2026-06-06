@@ -23,7 +23,8 @@
     display: block;
   }
 
-  .arrow {
+  .arrow,
+  slot[name="arrow"]::slotted(*) {
     rotate: 180deg;
   }
 }
@@ -109,12 +110,9 @@ li {
   }
 }
 
-.arrow {
+.arrow,
+slot[name="arrow"]::slotted(*) {
   position: absolute;
   right: 0.2rem;
   pointer-events: none;
-
-  &::after {
-    content: "▼";
-  }
 }
