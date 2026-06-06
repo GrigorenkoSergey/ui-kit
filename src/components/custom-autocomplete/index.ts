@@ -26,7 +26,7 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     initCustomElement(tagName, CustomAutocomplete);
   }
 
-  static getConstructor() { // TODO попробовать упростить это
+  static getConstructor() {
     const result = customElements.get(tagName) || CustomAutocomplete;
     return result as typeof CustomAutocomplete;
   }
@@ -263,3 +263,5 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     }
   }
 });
+
+export type CustomAutocomplete = InstanceType<typeof CustomAutocomplete>;
