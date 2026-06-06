@@ -4,37 +4,51 @@
     <ul class="attr-list">
       <li><b>name</b> - имя. Необходимо, для передачи во внутренний input.
         <b>Неотслеживаемое</b> (изменение не вызовет перерисовку элемента).
-      <li><b>prerendered</b> - флаг отключения считывания шаблона и посторения
-        html на его основе. Будет обрабатываться непосредственно переданная
-        разметка. <b>Неотслеживаемое.</b>
+      <li><b>label</b> - метка (легенда). Название поля.
+        <b>Неотслеживаемое</b>
       <li><b>open</b> - состояние открыт/закрыт</li>
       <li><b>value</b> - выбранное значение в поле ввода</li>
     </ul>
   </section>
+
   <section>
     <h3 data-testid="basic-section-title">Базовый вариант</h3>
 
     <p>Поддерживает фильтрацию, выделение с клавиатуры. Для добавления
       первоначальных опций необходимо их добавить вручную:
     <pre>const autocomplete = document.querySelector("custom-autocomplete");
-autocomplete.setOptions(["Опция-1", "Опция-2", "Опция-3", "Опция-4", "Опция-5"]);</pre>
+autocomplete.options = [
+  {value: "Опция-1"}, 
+  {value: "Опция-2"},
+  {value: "Опция-3"},
+  {value: "Опция-4"}, 
+  {value: "Опция-5"},
+];</pre>
     </p>
 
     <div class="component-wrapper-basic">
-      <custom-autocomplete class="basic" data-testid="basic" name="basic"></custom-autocomplete>
+      <custom-autocomplete class="basic" data-testid="basic" name="basic">
+        <span slot="label">Basic</span>>
+      </custom-autocomplete>
       <span>Кол-во рендеров: <span data-testid="basic-renders-count">0</span></span>
     </div>
   </section>
 
   <section>
+    <h3>Много много элементов..</h3>
+    <custom-autocomplete class="long-list" name="long-list" data-testid="long-list">
+      <span slot="label">Длинный список</span>
+    </custom-autocomplete>
+  </section>
+
+  <section>
     <h3>Кастомизированные опции</h3>
     <p>По умолчанию компонент принимает простейшие опции
-      вида <b>string[]</b>.
+      вида <b>{value: string, label?: string}[]</b>.
       Однако, список можно настроить дополнительно. Для этого нужно
       переопределить метод <b>element.renderLi</b>.
-      Функция принимает элемент опции, и должна вернуть элемент списка LI в
-      виде
-      строки с нужными атрибутами <b>data-value</b>,
+      Функция принимает элемент опции, и должна вернуть DOM-элемент списка LI
+      с нужными атрибутами <b>data-value</b>,
       по которому будет осуществлена фильтрация и выбор.
       Остальные атрибуты, которые указаны в шаблоне (напр. <b>id</b>), тоже
       должны быть вычислены.
@@ -45,16 +59,19 @@ autocomplete.setOptions(["Опция-1", "Опция-2", "Опция-3", "Опц
     <div class="example-customizing">
       <pre>const withCustomizedLi = document.querySelector(".customized-li");
 
-withCustomizedLi.renderLi = li => `\
-&lt;li part="li" data-value=${li.value}>
-  ${li.value}
-  &lt;a part="link" href=${li.wiki} target="_blank" >
-    ?
-  &lt;/a>
-&lt;/li>
-`;
+withCustomizedLi.renderLi = (option, index) => {
+  const {value, wiki} = option;
 
-withCustomizedLi.setOptions(
+  const li = document.createElement("li");
+  li.setAttribute("data-value", value);
+  li.innerHTML = `${value} &lt;a href="${wiki}" target="_blank" part="link">?&lt;/a>`;
+  li.id = `option-${index}`;
+  li.role = "option";
+
+  return li;
+};
+
+withCustomizedLi.options = [
   {
     value: "Винни-Пух",
     wiki: "https://en.wikipedia.org/wiki/Winnie-the-Pooh",
@@ -75,10 +92,15 @@ withCustomizedLi.setOptions(
     value: "Кролик",
     wiki: "https://en.wikipedia.org/wiki/Rabbit_(Winnie-the-Pooh)",
   },
-);
+];
 </pre>
       </p>
-      <custom-autocomplete class="customized-li" name="customized"></custom-autocomplete>
+      <custom-autocomplete class="customized-li" name="customized">
+        <span slot="label">Customized</span>
+        <svg slot="arrow" width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 9L12 15L6 9" stroke="black" />
+        </svg>
+      </custom-autocomplete>
     </div>
   </section>
 </div>

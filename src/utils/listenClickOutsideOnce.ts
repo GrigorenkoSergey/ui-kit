@@ -1,29 +1,33 @@
-const listeners = new Set();
+const listeners = new Map<HTMLElement, () => void>();
 
 const listenClickOutsideOnce = (
   element: HTMLElement,
   cb: (el: HTMLElement) => void,
 ) => {
-  if (listeners.has(element)) return;
+  const existingCleanup = listeners.get(element);
+  if (existingCleanup) return existingCleanup;
 
-  listeners.add(element);
-
-  document.addEventListener("click", function listener(event: MouseEvent) {
+  const listener = (event: MouseEvent) => {
     if (!listeners.has(element) || !element.isConnected) {
-      document.removeEventListener("click", listener);
-      listeners.delete(element);
-      return;
+      cleanup();
+      return; 
     }
 
-    const isClickInsideElement = () => event.composedPath()
-      .some(node => node instanceof Node && element.contains(node));
-
-    if (!isClickInsideElement()) {
+    if (!event.composedPath().includes(element)) {
       cb(element);
-      document.removeEventListener("click", listener);
-      listeners.delete(element);
+      cleanup();
     }
-  });
+  };
+
+  const cleanup = () => {
+    listeners.delete(element);
+    document.removeEventListener("click", listener);
+  };
+
+  document.addEventListener("click", listener);
+  listeners.set(element, cleanup);
+
+  return cleanup;
 };
 
 export { listenClickOutsideOnce };

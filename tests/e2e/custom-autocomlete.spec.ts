@@ -82,25 +82,6 @@ test("Простой выбор опций", async () => {
 test("Открытие-закрытие по клику", async () => {
   let expectedRenders = 0;
 
-  await test.step("Открытие по клику", async () => {
-    await elem.click();
-    expectedRenders += 1;
-    await checkIsOpen();
-    await checkExpectedRendersCount(expectedRenders);
-  });
-
-  await test.step("Закрытие по повторному клику на поле ввода", async () => {
-    await elem.click();
-    expectedRenders += 1;
-    await checkIsClosed();
-    await checkExpectedRendersCount(expectedRenders);
-  });
-
-  await test.step("Нет лишнего рендера по клику снаружи после закрытия", async () => {
-    await page.getByTestId("basic-section-title").click();
-    await checkExpectedRendersCount(expectedRenders);
-  });
-
   await test.step("Открытие по клику, закрытие по клику вне элемента", async () => {
     await elem.click();
     expectedRenders += 1;
@@ -149,6 +130,17 @@ test("Фильтрация по вводу", async () => {
     await input.fill("");
     await expect(elem.getByRole("option")).toHaveCount(totalOptionsCount);
   });
+
+  await test.step("При частичном удалении символа в уже выбранной опции при сбросе потере фокуса ввод восстанавливается", async () => {
+    await page.getByRole("option").first().click();
+    await expect(input).toHaveValue("Опция-1");
+    await input.click();
+    await input.press("Backspace");
+    await expect(input).toHaveValue("Опция-");
+
+    await input.press("Escape");
+    await expect(input).toHaveValue("Опция-1");
+  });
 });
 
 test("Очистка ввода", async () => {
@@ -184,6 +176,41 @@ test("Навигация с клавиатуры", async () => {
 
     await input.press("Escape");
     await expect(elem).toHaveAttribute("aria-expanded", "false");
+
+    await input.press("ArrowUp");
+    await expect(elem).toHaveAttribute("aria-expanded", "true");
+
+    await input.press("Escape");
+    await expect(elem).toHaveAttribute("aria-expanded", "false");
+  });
+
+  await test.step("Выделение крайних элементов списка", async () => {
+    await input.press("ArrowDown");
+    await input.press("ArrowDown");
+    await expect(elem.getByRole("option").first()).toHaveClass(/keyboard-focused/);
+    await input.press("Escape");
+
+    await expect(elem).toHaveAttribute("aria-expanded", "false");
+
+    await input.press("ArrowUp");
+    await input.press("ArrowUp");
+    await expect(elem.getByRole("option").last()).toHaveClass(/keyboard-focused/);
+    await input.press("Escape");
+
+    await expect(elem).toHaveAttribute("aria-expanded", "false");
+  });
+
+  await test.step("Классы верно сбрасываются при закрытии", async () => {
+    await input.click();
+    await input.press("ArrowUp");
+    await expect(elem.getByRole("option").last()).toHaveClass(/keyboard-focused/);
+
+    await input.press("Escape");
+    await input.press("ArrowDown");
+    await input.press("ArrowDown");
+    await expect(elem.getByRole("option").first()).toHaveClass(/keyboard-focused/);
+    await expect(elem.getByRole("option").last()).not.toHaveClass(/keyboard-focused/);
+    await input.press("Escape");
   });
 
   await test.step("Перемещение по списку вниз", async () => {
@@ -213,6 +240,17 @@ test("Навигация с клавиатуры", async () => {
     await checkIsOpen();
     await page.keyboard.press("Tab");
     await checkIsClosed();
+  });
+
+  await test.step("При наличии выбранного элемента навигация начинается с него", async () => {
+    await elem.click();
+    await page.getByRole("option").nth(2).click();
+    await elem.press("Escape");
+    await checkIsClosed();
+
+    await elem.click();
+    await input.press("ArrowDown");
+    await expect(page.getByRole("option").nth(3)).toHaveClass(/keyboard-focused/);
   });
 });
 
@@ -250,7 +288,7 @@ test("Изменения атрибутов снаружи", async () => {
     await checkExpectedRendersCount(expectedRenders);
   });
 
-  await elem.click();
+  await elem.press("Escape");
   expectedRenders += 1;
 
   await test.step("Смена open", async () => {
@@ -294,7 +332,7 @@ test("Изменения опций снаружи", async () => {
     await checkExpectedRendersCount(expectedRenders);
   });
 
-  await elem.click();
+  await elem.press("Escape");
   expectedRenders += 1;
 
   await test.step("Смена open", async () => {
@@ -336,7 +374,7 @@ test("Проверка основных ARIA атрибутов", async () => {
     const listboxId = await elem.getAttribute("aria-controls");
     expect(listboxId).not.toBeNull();
 
-    const listbox = page.locator(`#${listboxId}`);
+    const listbox = elem.locator(`#${listboxId}`);
     await expect(listbox).toBeVisible();
     await expect(listbox).toHaveAttribute("role", "listbox");
   });
@@ -358,4 +396,44 @@ test("Проверка основных ARIA атрибутов", async () => {
     await input.press("ArrowDown");
     await checkHasAttr(elem.getByRole("option", { name: option2Text }));
   });
+});
+
+test("Навигация в отфильтрованном списке с выбранным значением", async () => {
+  await page.evaluate(() => {
+    const elem = document.querySelector("[data-testid=basic]");
+    if (elem && "options" in elem) {
+      elem.options = [
+        { value: "Apple" },
+        { value: "Banana" },
+        { value: "Apricot" },
+      ];
+    }
+  });
+
+  await elem.click();
+  await selectOption("Apricot");
+  await expect(input).toHaveValue("Apricot");
+  await checkIsClosed();
+
+  await input.click();
+  await input.fill("Ap");
+  await expect(elem.getByRole("option")).toHaveCount(2);
+
+  await input.press("ArrowUp");
+
+  await expect(elem.getByRole("option", { name: "Apple" })).toHaveClass(/keyboard-focused/);
+  await expect(elem.getByRole("option", { name: "Apricot" })).not.toHaveClass(/keyboard-focused/);
+
+  await input.press("ArrowDown");
+  await expect(elem.getByRole("option", { name: "Apple" })).not.toHaveClass(/keyboard-focused/);
+  await expect(elem.getByRole("option", { name: "Apricot" })).toHaveClass(/keyboard-focused/);
+});
+
+test("Навигация в очень длинных списках. Выделенные элементы всегда видны.", async () => {
+  elem = page.getByTestId("long-list");
+  input = elem.getByRole("textbox");
+
+  await elem.click();
+  input.press("ArrowUp");
+  await expect(page.getByRole("option").last()).toBeInViewport();
 });

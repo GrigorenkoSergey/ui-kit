@@ -1,391 +1,267 @@
 import template from "./template.html";
-import styles from "./style.css?raw";
-
-import { listenClickOutsideOnce } from "@/utils/listenClickOutsideOnce";
-import { generateIdInDocument } from "@/utils/generateIdInDocument";
+import css from "./style.css?raw";
+import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
-import {
-  syncAttrPropsWithState,
-  applyGetSet,
-  syncPropsWithAttrs,
-  attachStyles,
-  findById,
-  replaceToCustomIds,
-} from "@/utils/customElementHelpers";
 
-// TODO добавить крестик
-// TODO добавить видимость выбранного элемента в случае длинных списков (возможно, прокрутка к нему)
-const liClasses = {
-  keyboardFocused: "keyboard-focused",
-};
+import { createRushElement, RushElement } from "../rush-element";
 
-const events = {
-  change: "custom-autocomplete__change" as const,
-};
+const defaultSheet = new CSSStyleSheet();
+defaultSheet.replaceSync(css);
 
-export interface CEvent extends CustomEvent {
-  detail: {
-    oldValue: string | boolean;
-    newValue: string | boolean;
-    attribute: string;
-    source: "user" | "program";
-  }
-}
+const observedAttributes = ["value", "open", "pattern"] as const;
+type ObservedAttribute = typeof observedAttributes[number];
+const tagName = "custom-autocomplete";
 
-export class CustomAutocomplete extends HTMLElement {
-  _isInnerAttrSet = false;
-  _isRendered = false;
-  _state;
-  _nodes;
-  open;
-  value;
-  events;
-  shadowRoot!: ShadowRoot;
+type Option = {value: string, label?: string};
 
-  [key: string]: unknown;
-  ["constructor"]!: typeof CustomAutocomplete;
+export const CustomAutocomplete = createRushElement(class extends RushElement {
+  pendingUpdates: Set<ObservedAttribute> = new Set();
+  eventAttributes: Set<string> = new Set();
 
-  constructor() {
-    super();
+  static defaultTemplate = template;
+  static defaultSheets = [defaultSheet];
+  static observedAttributes = [...observedAttributes];
 
-    this.attachShadow({ mode: "open" });
-    // properties that will be synchronized with attributes
-    this.open = this.hasAttribute("open");
-    this.value = this.getAttribute("value") || "";
-    applyGetSet(this, "open", "value");
-
-    this.events = events;
-    Object.defineProperty(this, "events", { writable: false });
-
-    this._state = {
-      open: this.open,
-      value: this.value,
-      options: [] as unknown[],
-      isEditing: false,
-      selected: null as null | Element,
-    };
-
-    this._nodes = {
-      input: null as null | HTMLInputElement,
-      ul: null as null | HTMLUListElement,
-      selected: null as null | Element,
-      activeDescendant: null as null | Element,
-    };
+  static init() {
+    initCustomElement(tagName, CustomAutocomplete);
   }
 
-  static get observedAttributes() {
-    return ["value", "open"];
+  static getConstructor() {
+    const result = customElements.get(tagName) || CustomAutocomplete;
+    return result as typeof CustomAutocomplete;
   }
 
-  attributeChangedCallback(
-    name: string,
-    oldValue: string | boolean,
-    newValue: string | boolean,
-  ) {
-    if (!this._isRendered) return;
+  #nodes = {} as {
+    input: HTMLInputElement,
+    ul: HTMLUListElement,
+  };
 
-    if (oldValue !== newValue) {
-      this.dispatchEvent(
-        new CustomEvent(events.change, {
-          bubbles: true,
-          composed: true,
-          detail: {
-            oldValue,
-            newValue,
-            attribute: name,
-            source: this._isInnerAttrSet ? "user" : "program",
-          },
-        }),
-      );
+  #activeDescendantIndex: number = -1;
+
+  #options: Option[] = [];
+
+  set options(options: Option[]) {
+    this.#options = options;
+    this.renderList(options);
+  }
+  get options() {
+    return this.#options;
+  }
+
+  get open() {
+    return this.hasAttribute("open");
+  }
+  set open(value: boolean) {
+    if (value) this.setAttribute("open", "");
+    else this.removeAttribute("open");
+  }
+
+  get value() {
+    return this.getAttribute("value") || "";
+  }
+  set value(value: string) {
+    this.setAttribute("value", value);
+  }
+
+  get pattern() {
+    return this.getAttribute("pattern") || "";
+  }
+  set pattern(value: string) {
+    this.setAttribute("pattern", value);
+  }
+
+  connectedCallback(): void {
+    this.cacheStaticNodes(); 
+    super.connectedCallback();
+  }
+
+  disconnectedCallback(): void {
+    document.removeEventListener("click", this);
+  }
+
+  attachHandlers(): void {
+    this.shadowRoot.addEventListener("click", this);
+    this.#nodes.input.addEventListener("input", this);
+    this.shadowRoot.addEventListener("keydown", this);
+  }
+
+  handleEvent(event: Event) {
+    switch (event.type) {
+      case ("click"): return this.onClick(event as MouseEvent);
+      case ("input"): return this.onInput();
+      case ("keydown"): return this.onKeydown(event as KeyboardEvent);
     }
-
-    if (this._isInnerAttrSet) return;
-
-    syncPropsWithAttrs(this, name, newValue);
-    this.render(name);
   }
 
-  connectedCallback() {
-    this.shadowRoot.innerHTML = template;
+  setDefaultAttributes(): void {
+    this.role = "combobox";
+    this.ariaHasPopup = "listbox";
+    this.setAttribute("aria-controls", "ul");
+  }
 
-    const templateAttr = this.getAttribute("template");
-    const customTemplate = templateAttr && findById(templateAttr, this);
-
-    if (customTemplate instanceof HTMLTemplateElement) {
-      attachStyles(this, styles, customTemplate);
-      replaceToCustomIds(this.shadowRoot, customTemplate);
-    } else {
-      attachStyles(this, styles, null);
-    }
-
-    this.setAttribute("role", "combobox");
-    this.setAttribute("aria-haspopup", "listbox");
-
+  cacheStaticNodes() {
     const input = this.shadowRoot.querySelector("input");
-
-    const name = this.getAttribute("name");
-    if (!name) throw new Error("Custom-autocomplete: attribute 'name' is required!");
-    input?.setAttribute("name", name);
-
-    this._nodes.input = input;
+    assert(input instanceof HTMLInputElement);
+    this.#nodes.input = input;
 
     const ul = this.shadowRoot.querySelector("ul");
-    this._nodes.ul = ul;
-
-    const ulId = generateIdInDocument("custom-autocomplete");
-    ul?.setAttribute("id", ulId);
-    this.setAttribute("aria-controls", ulId);
-
-    this._nodes.selected = (this.value && ul) ? ul.querySelector(`[data-value='${this.value}']`) : null;
-
-    this._init();
-    this._attachHandlers();
-    this._isRendered = true;
+    assert(ul instanceof HTMLUListElement);
+    this.#nodes.ul = ul;
   }
 
-  setOptions(options: unknown[]) {
-    this._state.options = options;
-    this._init();
-  }
+  render() {
+    if (this.pendingUpdates.has("open")) {
+      const isOpen = this.open;
 
-  renderLi(item: unknown, index: number) {
-    return `<li part="li" id='option-${index}' data-value='${item}' role='option'>${item}</li>`;
-  }
+      this.ariaExpanded = String(isOpen);
 
-  // calling with the attribute name will mean that the render is initiated from attributeChangeCallback
-  render(attrName: string = "") {
-    syncAttrPropsWithState(this, attrName);
+      if (isOpen) {
+        this.addEventListener("blur", this.onBlur, {once: true});
+        document.addEventListener("click", this);
+      } else {
+        this.removeEventListener("blur", this.onBlur);
+        document.removeEventListener("click", this);
 
-    const { _state, _nodes } = this;
-    const { value, open } = _state;
-    if (!_state.isEditing && _nodes.input) _nodes.input.value = value;
-    this.ariaExpanded = String(open);
+        this.#nodes.ul.children[this.#activeDescendantIndex]
+          ?.classList.remove("keyboard-focused");
+        this.#activeDescendantIndex = -1;
 
-    document.removeEventListener("focus", this._onOuterElementFocus, true);
-
-    if (!open) return;
-
-    document.addEventListener("focus", this._onOuterElementFocus, true);
-
-    const attr = "aria-activedescendant";
-    if (_nodes.activeDescendant) {
-      _nodes.input?.setAttribute(attr, _nodes.activeDescendant.id);
-    } else {
-      _nodes.input?.removeAttribute(attr);
+        this.pattern = "";
+        this.#nodes.input.value = this.value;
+      }
     }
 
-    const lis = Array.from(_nodes.ul?.querySelectorAll("li") || []);
-
-    for (const li of lis) {
-      this._visualizeSelected(li, value);
-      this._visualizeKeyboardSelected(li);
-      this._filterOnInput(li);
+    if (this.pendingUpdates.has("value")) {
+      this.#nodes.input.value = this.value;
     }
+
+    if (this.pendingUpdates.has("pattern")) {
+      this.filterList();
+    }
+
+    if (this.open) this.markSelectedLi();
+
+    this.pendingUpdates.clear();
   }
 
-  _init() {
-    const { ul, input } = this._nodes;
-    const { options, value } = this._state;
-    if (input) input.value = value;
+  renderLi(option: Option, index: number) {
+    const {value, label = value} = option;
 
-    if (ul) ul.replaceChildren(); // there the list element is given as an example, so we delete it
+    const li = document.createElement("li");
+    li.id = `option-${index}`;
+    li.setAttribute("data-value", value);
+    li.role = "option";
+    li.textContent = label || value;
 
-    const lis = options.map((item, index) => this.renderLi(item, index));
-    ul?.insertAdjacentHTML("afterbegin", lis.join(""));
-
-    this.render();
+    return li;
   }
 
-  _attachHandlers() {
-    // Note that here, since all clicks are on the shadow root, the order of processing is important. And does not depend on ascent
-    this.shadowRoot.addEventListener("click", this._onInputClick as EventListener);
-    this.shadowRoot.addEventListener("click", this._onClick as EventListener);
-    this.shadowRoot.addEventListener("keydown", this._onKeydown as EventListener);
-    this.shadowRoot.addEventListener("input", this._onInput);
+  renderList(options: Option[]) {
+    const lis = options.map((option, index) => this.renderLi(option, index));
+    this.#nodes.ul.replaceChildren(...lis);
   }
 
-  _onClick(event: MouseEvent) {
-    const { host } = this.getRootNode() as ShadowRoot;
-    assert(host instanceof CustomAutocomplete);
+  markSelectedLi() {
+    const value = this.value;
 
-    const { _state, _nodes } = host;
+    [...this.#nodes.ul.children].forEach(li => {
+      const liValue = li.getAttribute("data-value");
+      const isSelected = liValue === value;
+      li.ariaSelected = isSelected ? "true" : "false";
+    });
+  }
 
-    if (_state.open) {
-      listenClickOutsideOnce(host, () => {
-        if (!_state.open) return;
+  filterList() {
+    const pattern = this.pattern;
+    const filteredOptions = pattern ?
+      this.options.filter(({value, label = value}) => label.toLowerCase().includes(pattern)) :
+      this.options;
 
-        _state.open = false;
-        _state.isEditing = false;
-        if (_nodes.input?.value === "") _state.value = "";
-        host.render();
-      });
+    this.renderList(filteredOptions);
+  }
+
+  onClick(event: MouseEvent) {
+    if (!event.composedPath().includes(this)) {
+      this.open = false;
+      return;
     }
 
     const { target } = event;
-    assert(target instanceof HTMLElement);
-
+    if (!(target instanceof HTMLElement)) return;
+  
+    if (target === this.#nodes.input && !this.open) {
+      this.open = true;
+      return;
+    }
+  
     if (target.tagName === "LI") {
-      _state.value = target.getAttribute("data-value") || "";
-      _nodes.selected = target;
-      _state.open = false;
-      host.render();
+      this.value = target.getAttribute("data-value") || "";
+      this.open = false;
     }
   }
 
-  _onInputClick(event: MouseEvent) {
-    const { host } = this.getRootNode() as ShadowRoot;
-    assert(host instanceof CustomAutocomplete);
-
-    if (event.target !== host._nodes.input) return;
-
-    const { _state } = host;
-    _state.open = !_state.open;
-    host.render();
+  onBlur(event: FocusEvent) {
+    if (event.relatedTarget) this.open = false;
   }
 
-  _onInput() {
-    const { host } = this.getRootNode() as ShadowRoot;
-    assert(host instanceof CustomAutocomplete);
-
-    const { _state, _nodes } = host;
-    _state.isEditing = true;
-
-    if (!_nodes.input?.value) {
-      _nodes.selected = null;
-      _state.value = "";
-    }
-
-    host.render();
-
-    assert(_nodes.input);
-    _nodes.input.onblur = () => {
-      _state.isEditing = false;
-    };
+  onInput() {
+    const newPattern = this.#nodes.input.value.toLowerCase();
+    this.pattern = newPattern;
+    if (newPattern === "") this.value = "";
   }
 
-  _onKeydown(event: KeyboardEvent) {
-    const { host } = this.getRootNode() as ShadowRoot;
-    assert(host instanceof CustomAutocomplete);
-
+  onKeydown(event: KeyboardEvent) {
     const { key } = event;
-    if (key === "ArrowDown" || key === "ArrowUp") {
-      return host._onArrowKeydown(event);
-    }
 
-    const { _state } = host;
-    if (key === "Enter") {
-      const currentPointed = host._getCurrentPointedElement();
-      if (!currentPointed) return;
+    switch (key) {
+      case ("ArrowDown"):
+      case ("ArrowUp"): return this.onArrowKeydown(event);
 
-      assert(currentPointed instanceof HTMLElement);
+      case ("Escape"): {
+        if (this.open) this.open = false;
+        return;
+      }
 
-      _state.value = currentPointed.dataset.value || "";
-      _state.selected = currentPointed;
-      _state.open = false;
-      _state.isEditing = false;
-
-      return host.render();
-    }
-
-    if (key === "Escape") {
-      const wasOpen = _state.open;
-      _state.open = false;
-      return wasOpen && host.render();
+      case ("Enter"): {
+        const focusedLi = this.#nodes.ul.children[this.#activeDescendantIndex];
+        if (focusedLi instanceof HTMLLIElement) focusedLi.click();
+      }
     }
   }
 
-  _onArrowKeydown(event: KeyboardEvent) {
+  onArrowKeydown(event: KeyboardEvent) {
     event.preventDefault(); // so that the cursor does not move
 
-    const { _nodes, _state } = this;
-    if (!_state.open) {
-      _state.open = true;
-      return this.render();
+    if (!this.open) return this.open = true;
+
+    const {key} = event;
+    const searchDirection = key === "ArrowDown" ? 1 : -1;
+    const ul = this.#nodes.ul;
+
+    const curIndex = this.#activeDescendantIndex;
+    const items = [...ul.children] as HTMLLIElement[];
+    items[curIndex]?.classList.remove("keyboard-focused");
+
+    let newIndex;
+    const value = this.value;
+    if (curIndex === -1 && value) {
+      newIndex = items.findIndex(li => li.getAttribute("data-value") === value) + searchDirection;
+    } else if (curIndex === -1) {
+      newIndex = searchDirection === 1 ? 0 : items.length - 1;
+    } else {
+      newIndex = curIndex + searchDirection;
     }
 
-    const startPoint = this._getCurrentPointedElement();
-    const ul = _nodes.ul;
+    newIndex = Math.min(Math.max(0, newIndex), items.length - 1);
 
-    assert(ul !== null);
-
-    const visibleLis = ul.querySelectorAll("li:not([hidden])");
-    if (visibleLis.length === 0) return;
-
-    const firstVisible = visibleLis[0];
-    const lastVisible = visibleLis[visibleLis.length - 1];
-    let elementToHighlight = startPoint;
-
-    const { key } = event;
-    if (key === "ArrowDown") {
-      if (!startPoint) elementToHighlight = firstVisible;
-      else if (startPoint === lastVisible) elementToHighlight = lastVisible;
-      else {
-        let elem = startPoint.nextElementSibling;
-        while (elem && "hidden" in elem && elem.hidden) elem = elem.nextElementSibling;
-        elementToHighlight = elem;
-      }
-    }
-
-    if (key === "ArrowUp") {
-      if (!startPoint) elementToHighlight = lastVisible;
-      else if (startPoint === firstVisible) elementToHighlight = firstVisible;
-      else {
-        let elem = startPoint.previousElementSibling;
-        while (elem && "hidden" in elem && elem.hidden) elem = elem.previousElementSibling;
-        elementToHighlight = elem;
-      }
-    }
-
-    _nodes.activeDescendant = elementToHighlight;
-    this.render();
-
-    this.addEventListener("pointermove", this._onPointerMove, { once: true });
-  }
-
-  _onPointerMove() {
-    this._nodes.activeDescendant = null;
-    this.render();
-  }
-
-  _onOuterElementFocus = (event: FocusEvent) => {
-    const target = event.target as Node;
-    if (!this.contains(target)) {
-      this._state.open = false;
-      this.render();
-    }
-  };
-
-  _getCurrentPointedElement() {
-    const { _nodes } = this;
-    const { activeDescendant, ul, selected } = _nodes;
-
-    return activeDescendant || ul?.querySelector("li:hover") || selected;
-  }
-
-  _visualizeSelected(li: HTMLElement, value: string) {
-    const attr = "aria-selected";
-    if (li.dataset.value === value) li.setAttribute(attr, "true");
-    else li.removeAttribute(attr);
-  }
-
-  _visualizeKeyboardSelected(li: HTMLElement) {
-    if (this._nodes.activeDescendant === li) li.classList.add(liClasses.keyboardFocused);
-    else li.classList.remove(liClasses.keyboardFocused);
-  }
-
-  _filterOnInput(li: HTMLElement) {
-    if (!this._state.isEditing) li.hidden = false;
-    else {
-      assert(this._nodes.input !== null);
-
-      const inputValue = this._nodes.input.value.toLowerCase();
-      const isMatch = li.textContent.toLowerCase().includes(inputValue);
-      if (isMatch) li.hidden = false;
-      else li.hidden = true;
+    const nextEl = items[newIndex];
+    if (nextEl) {
+      nextEl.scrollIntoView({ block: "nearest", inline: "nearest" });
+      nextEl.classList.add("keyboard-focused");
+      this.#nodes.input.setAttribute("aria-activedescendant", nextEl.id);
+      this.#activeDescendantIndex = newIndex;
     }
   }
-}
+});
 
-if (!customElements.get("custom-autocomplete")) {
-  customElements.define("custom-autocomplete", CustomAutocomplete); 
-}
+export type CustomAutocomplete = InstanceType<typeof CustomAutocomplete>;

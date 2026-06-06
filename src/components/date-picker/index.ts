@@ -73,6 +73,7 @@ export const DatePicker = createRushElement(class extends RushElement {
   pendingUpdates = new Set<typeof observedAttributes[number]>();
   eventAttributes = new Set(["date"]);
 
+  static defaultTemplate = template;
   static defaultSheets = [defaultSheet];
   static formAssociated = true;
   static observedAttributes = [...observedAttributes];
@@ -202,7 +203,6 @@ export const DatePicker = createRushElement(class extends RushElement {
   }
 
   connectedCallback() {
-    this.shadowRoot.innerHTML = template;
     this.cacheStaticNodes();
     super.connectedCallback();
   }

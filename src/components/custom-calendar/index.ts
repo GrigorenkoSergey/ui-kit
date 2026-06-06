@@ -80,6 +80,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   pendingUpdates = new Set<ObservedAttribute>();
   eventAttributes = new Set(["date"]);
 
+  static defaultTemplate = template;
   static defaultSheets = [defaultSheet];
   static observedAttributes = [...observedAttributes];
 
@@ -98,10 +99,6 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   static getConstructor(): typeof CustomCalendar {
     const result = customElements.get("custom-calendar") || CustomCalendar;
     return result as typeof CustomCalendar;
-  }
-
-  constructor() {
-    super();
   }
 
   get view(): View {
@@ -150,7 +147,6 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   }
 
   connectedCallback() {
-    this.shadowRoot.innerHTML = template;
     super.connectedCallback();
   }
 
