@@ -26,7 +26,9 @@ autocomplete.options = [
     </p>
 
     <div class="component-wrapper-basic">
-      <custom-autocomplete class="basic" data-testid="basic" name="basic" label="Basic"></custom-autocomplete>
+      <custom-autocomplete class="basic" data-testid="basic" name="basic">
+        <span slot="label">Basic</span>>
+      </custom-autocomplete>
       <span>Кол-во рендеров: <span data-testid="basic-renders-count">0</span></span>
     </div>
   </section>
@@ -85,7 +87,9 @@ withCustomizedLi.options = [
 ];
 </pre>
       </p>
-      <custom-autocomplete class="customized-li" name="customized" label="Customized"></custom-autocomplete>
+      <custom-autocomplete class="customized-li" name="customized">
+        <span slot="label">Customized</span>
+      </custom-autocomplete>
     </div>
   </section>
 </div>
