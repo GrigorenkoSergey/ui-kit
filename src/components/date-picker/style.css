@@ -12,6 +12,10 @@
   max-width: var(--max-width);
 }
 
+:host([hidden]) {
+  display: none
+}
+
 .wrapper {
   display: flex;
   border: 1px solid var(--border-color);

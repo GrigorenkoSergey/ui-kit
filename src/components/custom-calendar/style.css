@@ -12,6 +12,10 @@
   --bg-focus: #cfe2ff;
 }
 
+:host([hidden]) {
+  display: none
+}
+
 :host(:is([view="years"], [view="months"])) {
 
   #dates,
