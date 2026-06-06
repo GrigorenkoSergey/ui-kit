@@ -397,3 +397,37 @@ test("Проверка основных ARIA атрибутов", async () => {
     await checkHasAttr(elem.getByRole("option", { name: option2Text }));
   });
 });
+
+test("Навигация в отфильтрованном списке с выбранным значением", async () => {
+  await page.evaluate(() => {
+    const elem = document.querySelector("[data-testid=basic]");
+    if (elem && "options" in elem) {
+      elem.options = [
+        { value: "Apple" },
+        { value: "Banana" },
+        { value: "Apricot" },
+      ];
+    }
+  });
+
+  await elem.click();
+  await expect(elem.getByRole("option")).toHaveCount(3);
+  await elem.press("Escape");
+
+  await selectOption("Apricot");
+  await expect(input).toHaveValue("Apricot");
+  await checkIsClosed();
+
+  await input.click();
+  await input.fill("Ap");
+  await expect(elem.getByRole("option")).toHaveCount(2);
+
+  await input.press("ArrowUp");
+
+  await expect(elem.getByRole("option", { name: "Apple" })).toHaveClass(/keyboard-focused/);
+  await expect(elem.getByRole("option", { name: "Apricot" })).not.toHaveClass(/keyboard-focused/);
+
+  await input.press("ArrowDown");
+  await expect(elem.getByRole("option", { name: "Apple" })).not.toHaveClass(/keyboard-focused/);
+  await expect(elem.getByRole("option", { name: "Apricot" })).toHaveClass(/keyboard-focused/);
+});

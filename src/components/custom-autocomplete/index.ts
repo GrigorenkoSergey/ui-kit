@@ -244,20 +244,22 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     const ul = this.#nodes.ul;
 
     const curIndex = this.#activeDescendantIndex;
-    ul.children[curIndex]?.classList.remove("keyboard-focused");
+    const items = [...ul.children] as HTMLLIElement[];
+    items[curIndex]?.classList.remove("keyboard-focused");
 
     let newIndex;
-    if (curIndex === -1 && this.value) {
-      newIndex = this.options.findIndex(({value}) => this.value === value) + searchDirection;
+    const value = this.value;
+    if (curIndex === -1 && value) {
+      newIndex = items.findIndex(li => li.getAttribute("data-value") === value) + searchDirection;
     } else if (curIndex === -1) {
-      newIndex = searchDirection === 1 ? 0 : ul.children.length - 1;
+      newIndex = searchDirection === 1 ? 0 : items.length - 1;
     } else {
-      newIndex = this.#activeDescendantIndex + searchDirection;
+      newIndex = curIndex + searchDirection;
     }
 
-    newIndex = Math.min(Math.max(0, newIndex), ul.children.length - 1);
+    newIndex = Math.min(Math.max(0, newIndex), items.length - 1);
 
-    const nextEl = ul.children[newIndex];
+    const nextEl = items[newIndex];
     if (nextEl) {
       nextEl.classList.add("keyboard-focused");
       this.#nodes.input.setAttribute("aria-activedescendant", nextEl.id);
