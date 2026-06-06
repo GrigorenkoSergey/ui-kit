@@ -70,10 +70,6 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
     this.setAttribute("pattern", value);
   }
 
-  constructor() {
-    super();
-  }
-
   connectedCallback(): void {
     this.cacheStaticNodes(); 
     super.connectedCallback();

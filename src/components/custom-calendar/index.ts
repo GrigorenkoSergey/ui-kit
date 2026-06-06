@@ -101,10 +101,6 @@ export const CustomCalendar = createRushElement(class extends RushElement {
     return result as typeof CustomCalendar;
   }
 
-  constructor() {
-    super();
-  }
-
   get view(): View {
     return this.getAttribute("view") as View || "dates";
   }
