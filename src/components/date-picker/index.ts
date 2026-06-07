@@ -1,9 +1,8 @@
 import template from "./template.html";
 import css from "./style.css?raw";
-import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 import { CustomCalendar } from "../custom-calendar";
-import { RushElement, createRushElement } from "../rush-element";
+import { RushElement, createRushElement, initCustomElement } from "../rush-element";
 
 const defaultMinYear = 1970;
 const defaultMaxYear = 2050;
@@ -67,8 +66,6 @@ defaultSheet.replaceSync(css);
  * <date-picker date="04/12/2026"></date-picker>
  */
 export const DatePicker = createRushElement(class extends RushElement {
-  [key: string]: unknown;
-
   internals;
   pendingUpdates = new Set<typeof observedAttributes[number]>();
   eventAttributes = new Set(["date"]);

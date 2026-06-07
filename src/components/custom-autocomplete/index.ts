@@ -1,9 +1,8 @@
 import template from "./template.html";
 import css from "./style.css?raw";
-import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 
-import { createRushElement, RushElement } from "../rush-element";
+import { createRushElement, RushElement, initCustomElement } from "../rush-element";
 
 const defaultSheet = new CSSStyleSheet();
 defaultSheet.replaceSync(css);

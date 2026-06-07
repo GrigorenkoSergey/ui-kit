@@ -1,22 +1,9 @@
-
 export interface RushElementConstructor extends CustomElementConstructor {
   new(): RushElementInterface;
   defaultTemplate: string,
   defaultSheets: CSSStyleSheet[];
   observedAttributes: string[];
   init(): void;
-  /**
-   * Должен возвращать "правильный" конструктор кастомного элемента.
-   * Это решает проблему дублирования модулей, когда сборщики (напр. Webpack)
-   * могут создать несколько экземпляров класса при динамическом импорте.
-   * Метод гарантирует, что мы всегда работаем с тем конструктором,
-   * который был зарегистрирован в `customElements`.
-   * @example
-   * static getConstructor() {
-   * const result = customElements.get("your-custom-tag-name") || YourClass;
-   *   return result as typeof YourClass;
-   * }
-   */
   getConstructor(): RushElementConstructor;
 }
 
@@ -80,14 +67,4 @@ export abstract class RushElement extends HTMLElement implements RushElementInte
 
 export function createRushElement<T extends RushElementConstructor>(ctor: T): T {
   return ctor;
-}
-
-/**
- * @param {String} name
- * @param {HTMLElement} constructor
- */
-export function initCustomElement<C extends RushElementConstructor>(name: string, constructor: C) {
-  if (!customElements.get(name)) {
-    customElements.define(name, constructor); 
-  }
 }

@@ -1,8 +1,7 @@
 import template from "./template.html";
 import css from "./style.css?raw";
-import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
-import { createRushElement, RushElement } from "../rush-element";
+import { createRushElement, RushElement, initCustomElement } from "../rush-element";
 
 const msInDay = 24 * 60 * 60 * 1000;
 
@@ -88,15 +87,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
     initCustomElement("custom-calendar", CustomCalendar);
   }
 
-  /**
-   * Возвращает "правильный" конструктор кастомного элемента.
-   * Это решает проблему дублирования модулей, когда сборщики (напр. Webpack)
-   * могут создать несколько экземпляров класса при динамическом импорте.
-   * Метод гарантирует, что мы всегда работаем с тем конструктором,
-   * который был зарегистрирован в `customElements`.
-   */
-
-  static getConstructor(): typeof CustomCalendar {
+  static getConstructor() {
     const result = customElements.get("custom-calendar") || CustomCalendar;
     return result as typeof CustomCalendar;
   }
