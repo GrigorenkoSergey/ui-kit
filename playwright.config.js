@@ -43,7 +43,7 @@ export default defineConfig({
       name: "chromium",
       use: { 
         ...devices["Desktop Chrome"],
-        locale: "ru",
+        locale: "ru-RU",
       },
     },
 
@@ -51,7 +51,7 @@ export default defineConfig({
       name: "firefox",
       use: { 
         ...devices["Desktop Firefox"], 
-        locale: "ru",
+        locale: "ru-RU",
       },
 
     },

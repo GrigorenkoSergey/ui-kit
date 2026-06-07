@@ -1,7 +1,8 @@
-import { DatePicker } from "@/components/date-picker";
+import { DatePicker as DatePickerOrigin } from "@/components/date-picker";
 import "./style.css";
 import { assert } from "@/utils/assert";
 
+const DatePicker = DatePickerOrigin.getConstructor();
 DatePicker.init();
   
 export default () => {
@@ -64,6 +65,20 @@ export default () => {
 
   disableButton.addEventListener("click", () => {
     dateInput.toggleAttribute("disabled");
+  });
+
+  const basicCalendar = document.getElementsByName("date")[0];
+  assert(basicCalendar instanceof DatePicker);
+
+  const localeSelect = document.querySelector("#basic-locale-select");
+  assert(localeSelect instanceof HTMLSelectElement);
+  localeSelect.value = navigator.language;
+
+  localeSelect?.addEventListener("change", event => {
+    const {target} = event;
+    if (!(target instanceof HTMLSelectElement)) return;
+
+    basicCalendar.locale = target.value;
   });
 };
 

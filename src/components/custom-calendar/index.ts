@@ -2,6 +2,7 @@ import template from "./template.html";
 import css from "./style.css?raw";
 import { assert } from "@/utils/assert";
 import { createRushElement, RushElement, initCustomElement } from "../rush-element";
+import translations from "./translations";
 
 const msInDay = 24 * 60 * 60 * 1000;
 
@@ -35,7 +36,7 @@ const getHost = (elem: Element) => {
 type View = "dates" | "months" | "years";
 type ArrowKey = "ArrowLeft" | "ArrowRight" | "ArrowDown" | "ArrowUp";
 
-const observedAttributes = ["year", "month", "date", "view"] as const;
+const observedAttributes = ["year", "month", "date", "view", "locale"] as const;
 type ObservedAttribute = typeof observedAttributes[number];
 const defaultMinYear = 1970;
 const defaultMaxYear = 2050;
@@ -83,6 +84,8 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   static defaultSheets = [defaultSheet];
   static observedAttributes = [...observedAttributes];
 
+  static translations: {[locale: string]: {[key: string]: string}} = translations;
+
   static init() {
     initCustomElement("custom-calendar", CustomCalendar);
   }
@@ -90,6 +93,13 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   static getConstructor() {
     const result = customElements.get("custom-calendar") || CustomCalendar;
     return result as typeof CustomCalendar;
+  }
+
+  get locale() {
+    return this.getAttribute("locale") || "en";
+  }
+  set locale(value: string) {
+    this.setAttribute("locale", value);
   }
 
   get view(): View {
@@ -165,6 +175,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
       if (!this.hasAttribute(name)) this.setAttribute(name, value);
     };
 
+    ensureAttribute("locale", navigator.language);
     ensureAttribute("view", "dates");
     ensureAttribute("date", this.date);
     ensureAttribute("month", String(this.month));
@@ -176,6 +187,11 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   render() {
     const view = this.view;
     const {pendingUpdates} = this;
+
+    if (pendingUpdates.has("locale")) {
+      this.renderActions();
+      pendingUpdates.add("view").add("month").add("year");
+    }
 
     if (pendingUpdates.has("month") || pendingUpdates.has("year")) {
       if (view === "dates" && !pendingUpdates.has("view")) this.renderDates();
@@ -191,6 +207,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
       if (view === "years") this.renderYears();
       else if (view === "months") this.renderMonths();
       else if (view === "dates") {
+        this.renderWeekDays();
         this.renderDates();
         this.restrictTableHeight(false);
       }
@@ -200,6 +217,23 @@ export const CustomCalendar = createRushElement(class extends RushElement {
     this.disableMonthArrowIfNeeded();
 
     pendingUpdates.clear();
+  }
+
+  renderWeekDays() {
+    const currentTimestamp = Number(new Date());
+    const formatter = new Intl.DateTimeFormat(this.locale, {
+      weekday: "short",
+    });
+
+    const days = Array.from({length: 14}, (_, i) => new Date(currentTimestamp + msInDay * i));
+    const startOfWeekIndex = days.findIndex(date => date.getDay() === 1);
+    const weekDays = days
+      .slice(startOfWeekIndex, startOfWeekIndex + 7)
+      .map(date => formatter.format(date));
+
+    const weadDaysRow = this.shadowRoot.getElementById("weekdays");
+    assert(weadDaysRow instanceof HTMLTableRowElement);
+    [...weadDaysRow.cells].forEach((cell, index) => cell.textContent = weekDays[index]);
   }
 
   renderDates() {
@@ -277,6 +311,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
     tbody.id = "months-tbody";
     const rows = 4;
     const cols = 3;
+    const locale = this.locale;
 
     for (let row = 0; row < rows; row++) {
       const tr = document.createElement("tr");
@@ -289,7 +324,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
         td.tabIndex = -1;
         td.textContent = new Date(
           new Date().setMonth(index),
-        ).toLocaleDateString(undefined, {month: "short"});
+        ).toLocaleDateString(locale, {month: "short"});
 
         tr.append(td);
       }
@@ -302,6 +337,16 @@ export const CustomCalendar = createRushElement(class extends RushElement {
     if (currentMonthTd instanceof HTMLTableCellElement) {
       currentMonthTd.focus();
     }
+  }
+
+  renderActions() {
+    const translations = CustomCalendar.translations[this.locale];
+
+    const todayButton = this.shadowRoot.getElementById("today");
+    if (todayButton) todayButton.textContent = translations?.today || "Today";
+
+    const cancelButton = this.shadowRoot.getElementById("cancel");
+    if (cancelButton) cancelButton.textContent = translations?.cancel || "Cancel";
   }
 
   onNextMonthClick() {
@@ -588,7 +633,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   }
 
   formatYearMonth(year: number, month: number) {
-    return new Date(year, month).toLocaleDateString(undefined, {
+    return new Date(year, month).toLocaleDateString(this.locale, {
       month: "long",
       year: "numeric",
     });

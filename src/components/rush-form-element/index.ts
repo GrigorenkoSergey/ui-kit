@@ -1,20 +1,21 @@
-export interface RushElementConstructor extends CustomElementConstructor {
-  new(): RushElementInterface;
+export interface RushFormElementConstructor extends CustomElementConstructor {
+  new(): RushFormElementInterface;
   defaultTemplate: string,
   defaultSheets: CSSStyleSheet[];
   observedAttributes: string[];
   init(): void;
-  getConstructor(): RushElementConstructor;
+  getConstructor(): RushFormElementConstructor;
 }
 
-export interface RushElementInterface {
+export interface RushFormElementInterface {
   shadowRoot: ShadowRoot;
   pendingUpdates: Set<string>
   eventAttributes: Set<string>
 }
 
-export abstract class RushElement extends HTMLElement implements RushElementInterface {
+export abstract class RushFormElement extends HTMLElement implements RushFormElementInterface {
   shadowRoot!: ShadowRoot;
+  internals;
 
   abstract pendingUpdates: Set<string>;
   abstract eventAttributes: Set<string>;
@@ -23,11 +24,61 @@ export abstract class RushElement extends HTMLElement implements RushElementInte
   abstract attachHandlers(): void;
   abstract setDefaultAttributes(): void;
 
+  static formAssociated = true;
+  abstract formResetCallback(): void;
+  abstract formStateRestoreCallback(state: string): void;
+
+  formDisabledCallback(isDisabled: boolean) {
+    this.disabled = isDisabled;
+  }
+
+  get form() {
+    return this.internals.form;
+  }
+
+  get disabled() {
+    return this.hasAttribute("disabled");
+  }
+
+  set disabled(value: boolean) {
+    this.toggleAttribute("disabled", value);
+  }
+
+  get required() {
+    return this.hasAttribute("required");
+  }
+
+  get validity() {
+    return this.internals.validity;
+  }
+
+  get willValidate() {
+    return this.internals.willValidate;
+  }
+
+  get validationMessage() {
+    return this.internals.validationMessage;
+  }
+  
+  reportValidity() {
+    this.internals.reportValidity();
+  }
+
+  checkValidity() {
+    this.internals.checkValidity();
+  }
+
+  setCustomValidity(message: string) {
+    if (message === "") this.internals.setValidity({});
+    else this.internals.setValidity({ customError: true }, message);
+  }
+
   constructor() {
     super();
     this.attachShadow({mode: "open"});
+    this.internals = this.attachInternals();
 
-    const ctor = customElements.get(this.localName) as RushElementConstructor;
+    const ctor = customElements.get(this.localName) as RushFormElementConstructor;
     this.shadowRoot.adoptedStyleSheets = ctor.defaultSheets;
     this.shadowRoot.innerHTML = ctor.defaultTemplate;
   }
@@ -65,6 +116,16 @@ export abstract class RushElement extends HTMLElement implements RushElementInte
   }
 }
 
-export function createRushElement<T extends RushElementConstructor>(ctor: T): T {
+export function createRushElement<T extends RushFormElementConstructor>(ctor: T): T {
   return ctor;
+}
+
+/**
+ * @param {String} name
+ * @param {HTMLElement} constructor
+ */
+export function initCustomElement<C extends RushFormElementConstructor>(name: string, constructor: C) {
+  if (!customElements.get(name)) {
+    customElements.define(name, constructor); 
+  }
 }

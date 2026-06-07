@@ -2,7 +2,10 @@ import template from "./template.html";
 import css from "./style.css?raw";
 import { assert } from "@/utils/assert";
 import { CustomCalendar } from "../custom-calendar";
-import { RushElement, createRushElement, initCustomElement } from "../rush-element";
+import { RushFormElement, createRushElement, initCustomElement } from "../rush-form-element";
+
+const defaultSheet = new CSSStyleSheet();
+defaultSheet.replaceSync(css);
 
 const defaultMinYear = 1970;
 const defaultMaxYear = 2050;
@@ -33,9 +36,6 @@ const getDateString = (date: Date) => date.toLocaleDateString("en", {
 
 const observedAttributes = ["disabled", "min-year", "max-year", "open", "date", "locale"] as const;
 
-const defaultSheet = new CSSStyleSheet();
-defaultSheet.replaceSync(css);
-
 /**
  * @element date-picker
  * @description
@@ -65,8 +65,7 @@ defaultSheet.replaceSync(css);
  * @example
  * <date-picker date="04/12/2026"></date-picker>
  */
-export const DatePicker = createRushElement(class extends RushElement {
-  internals;
+export const DatePicker = createRushElement(class extends RushFormElement {
   pendingUpdates = new Set<typeof observedAttributes[number]>();
   eventAttributes = new Set(["date"]);
 
@@ -92,11 +91,6 @@ export const DatePicker = createRushElement(class extends RushElement {
     return result as typeof DatePicker;
   }
 
-  constructor() {
-    super();
-    this.internals = this.attachInternals();
-  }
-
   formStateRestoreCallback(state: string) {
     this.date = state;
   }
@@ -106,41 +100,8 @@ export const DatePicker = createRushElement(class extends RushElement {
     this.setInputs("");
   }
 
-  formDisabledCallback(isDisabled: boolean) {
-    this.disabled = isDisabled;
-  }
-
-  get validity() {
-    return this.internals.validity;
-  }
-
-  get willValidate() {
-    return this.internals.willValidate;
-  }
-
-  get validationMessage() {
-    return this.internals.validationMessage;
-  }
-  
-  reportValidity() {
-    this.internals.reportValidity();
-  }
-
-  checkValidity() {
-    this.internals.checkValidity();
-  }
-
-  setCustomValidity(message: string) {
-    if (message === "") this.internals.setValidity({});
-    else this.internals.setValidity({ customError: true }, message);
-  }
-
   focus() {
     this.#nodes.yearInput.focus();
-  }
-
-  get form() {
-    return this.internals.form;
   }
 
   get open() {
@@ -180,23 +141,11 @@ export const DatePicker = createRushElement(class extends RushElement {
   }
 
   get locale() {
-    return this.getAttribute("locale") || navigator.language;
+    return this.getAttribute("locale") || "";
   }
 
   set locale(value: string) {
     this.setAttribute("locale", value);
-  }
-
-  get disabled() {
-    return this.hasAttribute("disabled");
-  }
-
-  set disabled(value: boolean) {
-    this.toggleAttribute("disabled", value);
-  }
-
-  get required() {
-    return this.hasAttribute("required");
   }
 
   connectedCallback() {
@@ -248,7 +197,7 @@ export const DatePicker = createRushElement(class extends RushElement {
     ensureAttribute("min-year", String(this.minYear));
     ensureAttribute("max-year", String(this.maxYear));
     ensureAttribute("open", this.open);
-    ensureAttribute("locale", this.locale);
+    ensureAttribute("locale", navigator.language);
   }
 
   render() {
@@ -256,6 +205,12 @@ export const DatePicker = createRushElement(class extends RushElement {
     assert(yearInput instanceof HTMLInputElement);
 
     const {pendingUpdates} = this;
+
+    if (pendingUpdates.has("locale")) {
+      this.reorderInputsAccordingToLocale(this.locale);
+      this.pendingUpdates.add("open");
+    }
+
     if (pendingUpdates.has("min-year")) yearInput.min = String(this.minYear);
     if (pendingUpdates.has("max-year")) yearInput.max = String(this.maxYear);
 
@@ -266,10 +221,6 @@ export const DatePicker = createRushElement(class extends RushElement {
 
     if (pendingUpdates.has("date")) {
       if (this.date) this.setInputs(new Date(this.date));
-    }
-
-    if (pendingUpdates.has("locale")) {
-      this.reorderInputsAccordingToLocale(this.locale || undefined);
     }
 
     if (pendingUpdates.has("disabled")) this.disableOrEnableInputs();
@@ -285,6 +236,7 @@ export const DatePicker = createRushElement(class extends RushElement {
     calendar.id = "calendar";
 
     const validDate = this.date ? new Date(this.date) : new Date();
+    calendar.locale = this.locale;
     calendar.year = validDate.getFullYear();
     calendar.month = validDate.getMonth();
     calendar.date = getDateString(validDate);

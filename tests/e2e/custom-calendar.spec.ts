@@ -111,7 +111,6 @@ test("Табуляция", async ({page}) => {
       calendar.getByRole("gridcell", { name: "14" }),
       calendar.getByRole("button", { name: "Сегодня" }),
       calendar.getByRole("button", { name: "Отмена" }),
-      calendar.getByRole("button", { name: "OK" }),
     ];
 
     for (const locator of order) {
@@ -567,4 +566,28 @@ test("Кнопка 'Сегодня' выбирает текущую дату (14
     await expect(calendar.getByRole("heading", { name: "февраль 2026 г" })).toBeVisible();
     await expect(selected).toContainText("14");
   });
+});
+
+test("Переключение локали", async ({page}) => {
+  await expect(page.getByTestId("basic").getByRole("heading", { name: "февраль 2026 г" })).toBeVisible();
+  await expect(page.getByTestId("basic").getByRole("columnheader", { name: "Пн" })).toBeVisible();
+  // TODO тест на кнопки
+
+  await page.evaluate(() => {
+    const element = document.querySelector("[data-testid='basic']");
+    element?.setAttribute("locale", "ko-KR");
+  });
+  
+  await expect(page.getByRole("columnheader", { name: "월" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "년 2월" })).toBeVisible();
+  // TODO тест на кнопки
+
+  await page.evaluate(() => {
+    const element = document.querySelector("[data-testid='basic']");
+    element?.setAttribute("locale", "en-US");
+  });
+
+  await expect(page.getByRole("heading", { name: "February" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Mon" })).toBeVisible();
+  // TODO тест на кнопки
 });
