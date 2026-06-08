@@ -9,18 +9,6 @@ export default () => {
   const form = document.querySelector("#test-form");
   assert(form instanceof HTMLFormElement);
 
-  const submit = form.querySelector("[type='submit']");
-  assert(submit instanceof HTMLButtonElement);
-
-  const reset = form.querySelector("[type='reset']");
-  assert(reset instanceof HTMLButtonElement);
-
-  const disableButton = form.querySelector("#disable-button");
-  assert(disableButton instanceof HTMLButtonElement);
-
-  const errorMessage = document.querySelector(".error");
-  assert(errorMessage instanceof HTMLSpanElement);
-
   const showFormContent = () => {
     const data = new FormData(form);
 
@@ -29,13 +17,21 @@ export default () => {
     formDataSpan.textContent = String(data.get("date"));
   };
 
+  const submit = form.querySelector("[type='submit']");
+  assert(submit instanceof HTMLButtonElement);
+
   submit.addEventListener("click", (event) => {
     event.preventDefault();
     showFormContent();
     form.reportValidity();
   });
 
+  const reset = form.querySelector("[type='reset']");
+  assert(reset instanceof HTMLButtonElement);
   reset.addEventListener("click", () => setTimeout(showFormContent));
+
+  const errorMessage = document.querySelector(".error");
+  assert(errorMessage instanceof HTMLSpanElement);
 
   const dateInput = document.querySelector("[data-testid='form-connected']");
   assert(dateInput);
@@ -62,6 +58,9 @@ export default () => {
       errorMessage.textContent = target.validationMessage;
     }
   });
+
+  const disableButton = form.querySelector("#disable-button");
+  assert(disableButton instanceof HTMLButtonElement);
 
   disableButton.addEventListener("click", () => {
     dateInput.toggleAttribute("disabled");

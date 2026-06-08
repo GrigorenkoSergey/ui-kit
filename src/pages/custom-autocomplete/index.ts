@@ -71,4 +71,41 @@ export default () => {
   };
 
   withCustomizedLi.options = customizedOptions;
+
+  const formAutocomplete = document.querySelector("[data-testid=\"form-connected\"]");
+  assert(formAutocomplete instanceof CustomAutocomplete);
+  formAutocomplete.options = basicOptions;
+
+  const form = document.querySelector("#test-form");
+  assert(form instanceof HTMLFormElement);
+
+  const submit = form.querySelector("[type='submit']");
+  assert(submit instanceof HTMLButtonElement);
+
+  const reset = form.querySelector("[type='reset']");
+  assert(reset instanceof HTMLButtonElement);
+  reset.addEventListener("click", () => setTimeout(showFormContent));
+
+  const disableButton = form.querySelector("#disable-button");
+  assert(disableButton instanceof HTMLButtonElement);
+  disableButton.addEventListener("click", () => {
+    formAutocomplete.toggleAttribute("disabled");
+  });
+
+  const errorMessage = document.querySelector(".error");
+  assert(errorMessage instanceof HTMLSpanElement);
+
+  const showFormContent = () => {
+    const data = new FormData(form);
+
+    const formDataSpan = form.querySelector(".form-data");
+    assert(formDataSpan instanceof HTMLSpanElement);
+    formDataSpan.textContent = String(data.get("item"));
+  };
+
+  submit.addEventListener("click", (event) => {
+    event.preventDefault();
+    showFormContent();
+    form.reportValidity();
+  });
 };

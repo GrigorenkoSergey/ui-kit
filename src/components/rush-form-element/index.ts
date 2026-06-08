@@ -48,6 +48,10 @@ export abstract class RushFormElement extends HTMLElement implements RushFormEle
     return this.hasAttribute("required");
   }
 
+  set required(value: boolean) {
+    this.toggleAttribute("required", value);
+  }
+
   get validity() {
     return this.internals.validity;
   }
@@ -75,7 +79,7 @@ export abstract class RushFormElement extends HTMLElement implements RushFormEle
 
   constructor() {
     super();
-    this.attachShadow({mode: "open"});
+    this.attachShadow({mode: "open", delegatesFocus: true});
     this.internals = this.attachInternals();
 
     const ctor = customElements.get(this.localName) as RushFormElementConstructor;

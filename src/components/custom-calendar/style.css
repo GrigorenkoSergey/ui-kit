@@ -169,7 +169,6 @@ td {
   align-items: center;
   gap: 1rem;
   padding: 0 4px 8px;
-  flex-grow: 1;
 }
 
 .month-switchers {
