@@ -2,13 +2,20 @@
   display: block;
   position: relative;
 
-  --dropdown-background-color: rgb(117 177 164);
-  --item-selected-background-color: orange;
-  --item-keyboard-focused-background-color: red;
-  --item-hover-background-color: green;
-  --item-focused-outline: 1px solid;
+  --bg-button-hover: #e0e0e0;
+  --bg-selected: #007bff;
+  --bg-focus: #cfe2ff;
+  --bg-dropdown: #f0f2f5;
+
+  --color-disabled: #767676;
+  --color-selected: #ffffff;
+
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  --item-outline-focused: 2px solid black;
   --dropdown-z-index: 100;
 
+  --border-color: #a0a0a0;
   --border-radius: 8px;
 
   --max-height: 240px;
@@ -29,6 +36,19 @@
   }
 }
 
+:host([disabled]) {
+  opacity: 0.6;
+  cursor: not-allowed;
+
+  .input-wrapper {
+    cursor: not-allowed;
+  }
+
+  input {
+    cursor: not-allowed;
+  }
+}
+
 .input-wrapper {
   display: flex;
   align-items: center;
@@ -39,10 +59,12 @@
   &:focus-within {
     fieldset {
       border-width: 2px;
+      border-color: var(--bg-selected);
     }
 
     legend {
       margin-inline: 0;
+      color: var(--bg-selected);
     }
   }
 }
@@ -52,7 +74,6 @@ input {
   padding: 12px;
   font-size: 1rem;
   width: 100%;
-  cursor: pointer;
   border: none;
   outline: none;
   background-color: transparent;
@@ -66,17 +87,19 @@ fieldset {
   top: -12px;
   pointer-events: none;
   border-radius: var(--border-radius);
+  border-color: var(--border-color);
 }
 
 legend {
   margin-inline: 1px;
+  font-size: 0.8rem;
 }
 
 ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  background: var(--dropdown-background-color);
+  background: var(--bg-dropdown);
   position: absolute;
   width: 100%;
   display: none;
@@ -84,6 +107,8 @@ ul {
   border-radius: var(--border-radius);
   max-height: var(--max-height);
   overflow: auto;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow);
 }
 
 li {
@@ -93,7 +118,8 @@ li {
   cursor: pointer;
 
   &[aria-selected="true"] {
-    background-color: var(--item-selected-background-color);
+    background-color: var(--bg-selected);
+    color: var(--color-selected);
   }
 
   &[hidden] {
@@ -101,12 +127,12 @@ li {
   }
 
   &.keyboard-focused {
-    background-color: var(--item-keyboard-focused-background-color);
-    outline: var(--item-focused-outline);
+    background-color: var(--bg-focus);
+    outline: var(--item-outline-focused);
   }
 
   &:hover {
-    background-color: var(--item-hover-background-color);
+    background-color: var(--bg-button-hover);
   }
 }
 
@@ -115,4 +141,5 @@ slot[name="arrow"]::slotted(*) {
   position: absolute;
   right: 0.2rem;
   pointer-events: none;
+  transition: rotate .3s;
 }
