@@ -1,20 +1,19 @@
 import template from "./template.html";
 import css from "./style.css?raw";
-import { initCustomElement } from "@/utils/customElementHelpers";
 import { assert } from "@/utils/assert";
 
-import { createRushElement, RushElement } from "../rush-element";
+import {createRushElement, RushFormElement, initCustomElement} from "../rush-form-element";
 
 const defaultSheet = new CSSStyleSheet();
 defaultSheet.replaceSync(css);
 
-const observedAttributes = ["value", "open", "pattern"] as const;
+const observedAttributes = ["value", "open", "pattern", "disabled"] as const;
 type ObservedAttribute = typeof observedAttributes[number];
 const tagName = "custom-autocomplete";
 
 type Option = {value: string, label?: string};
 
-export const CustomAutocomplete = createRushElement(class extends RushElement {
+export const CustomAutocomplete = createRushElement(class extends RushFormElement {
   pendingUpdates: Set<ObservedAttribute> = new Set();
   eventAttributes: Set<string> = new Set();
 
@@ -40,6 +39,15 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
 
   #options: Option[] = [];
 
+  formResetCallback(): void {
+    this.value = "";
+    this.pattern = "";
+  }
+
+  formStateRestoreCallback(state: string): void {
+    this.value = state;
+  }
+
   set options(options: Option[]) {
     this.#options = options;
     this.renderList(options);
@@ -61,6 +69,11 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
   set value(value: string) {
     this.setAttribute("value", value);
+    this.internals.setFormValue(value);
+
+    if (this.required) {
+      this.internals.setValidity({ valueMissing: !value }, "Please select value");
+    }
   }
 
   get pattern() {
@@ -110,6 +123,10 @@ export const CustomAutocomplete = createRushElement(class extends RushElement {
   }
 
   render() {
+    if (this.pendingUpdates.has("disabled")) {
+      this.#nodes.input.disabled = this.disabled;
+    }
+
     if (this.pendingUpdates.has("open")) {
       const isOpen = this.open;
 

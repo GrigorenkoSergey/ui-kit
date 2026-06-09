@@ -7,6 +7,20 @@ CustomCalendarOrigin.init();
 const CustomCalendar = CustomCalendarOrigin.getConstructor();
 
 export default () => {
+  const localeSelect = document.querySelector("#basic-locale-select");
+  assert(localeSelect instanceof HTMLSelectElement);
+  localeSelect.value = navigator.language;
+
+  const basicCalendar = document.getElementById("basic");
+  assert(basicCalendar instanceof CustomCalendar);
+
+  localeSelect?.addEventListener("change", event => {
+    const {target} = event;
+    if (!(target instanceof HTMLSelectElement)) return;
+
+    basicCalendar.locale = target.value;
+  });
+
   const changeDefaultSheets = () => {
     const additionalSheet = new CSSStyleSheet();
     additionalSheet.replaceSync(`

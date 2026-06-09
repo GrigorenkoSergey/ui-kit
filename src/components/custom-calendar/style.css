@@ -109,6 +109,7 @@ th {
 th {
   color: #666;
   font-size: 0.9rem;
+  text-transform: capitalize;
 }
 
 td {
@@ -179,6 +180,7 @@ td {
 .month-year {
   font-size: 1.1rem;
   font-weight: 500;
+  text-wrap: nowrap;
 }
 
 .month-switchers {
@@ -230,21 +232,10 @@ td {
   transition: transform 0.1s ease, filter 0.1s ease, background-color 0.2s ease-in-out;
 }
 
-#ok {
-  background-color: var(--bg-selected);
-  color: var(--color-selected);
-
-  &:hover {
-    filter: brightness(1.1);
-  }
-
-  &:active {
-    filter: brightness(0.9);
-  }
-}
-
 #cancel,
 #today {
+  text-transform: capitalize;
+
   &:hover {
     background-color: var(--bg-button-hover);
   }

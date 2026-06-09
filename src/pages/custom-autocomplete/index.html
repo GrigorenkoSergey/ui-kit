@@ -103,6 +103,27 @@ withCustomizedLi.options = [
       </custom-autocomplete>
     </div>
   </section>
+
+  <section class="form-section">
+    <form id="test-form">
+      <custom-autocomplete data-testid="form-connected" name="item" required>
+        <span slot="label">Список в форме</span>
+      </custom-autocomplete>
+      <span class="error">Значение должно быть заполнено</span>
+
+      <div class="actions">
+        <button type="submit">Submit</button>
+        <button type="reset">Reset</button>
+        <button id="disable-button" type="button">Disable/Enable</button>
+      </div>
+
+      <div data-testid="form-info">
+        <span class="title">Данные формы: </span>
+        <span class="form-data"></span>
+        <span class="form-error"></span>
+      </div>
+    </form>
+  </section>
 </div>
 
 <br />

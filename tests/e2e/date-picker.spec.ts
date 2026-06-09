@@ -566,6 +566,7 @@ test("Отображение в разных локалях. \
       });
 
       expect(localizedText).toBe(formattedDate);
+      // TODO добавить проверку дней недели..
     });
   }
 });
