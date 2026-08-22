@@ -1,8 +1,8 @@
 # Библиотека кастомных элементов
 
-[Результат](https://grigorenkosergey.github.io/ui-kit/pages/custom-autocomplete/)
+[Результат (desktop)](https://grigorenkosergey.github.io/ui-kit/pages/custom-autocomplete/)
 
 
-Пока что здесь эксперименты с архитектурой. В конечном итоге необходимо вынести общую логику в общий класс, от которого наследовать. 
+Пока что здесь эксперименты с архитектурой.
 
 TODO fill
