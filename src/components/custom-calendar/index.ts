@@ -5,7 +5,6 @@ import { createRushElement, RushElement, initCustomElement } from "../rush-eleme
 import translations from "./translations";
 
 const msInDay = 24 * 60 * 60 * 1000;
-const msInMiniute = 60 * 1000;
 
 const monthDates = (d: string) => {
   const date = new Date(d);
@@ -40,16 +39,16 @@ type ArrowKey = "ArrowLeft" | "ArrowRight" | "ArrowDown" | "ArrowUp";
 const observedAttributes = ["year", "month", "date", "view", "locale"] as const;
 type ObservedAttribute = typeof observedAttributes[number];
 
-const getDateString = (date: Date) => { // to YYYY-MM-DD (locale date)
-  const offset = date.getTimezoneOffset();
+export const getDateString = (date: Date) => { // to YYYY-MM-DD (locale date)
+  const fullYear = String(date.getFullYear()).padStart(4, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const dateStr = String(date.getDate()).padStart(2, "0");
 
-  return new Date(Number(date) - offset * msInMiniute)
-    .toISOString()
-    .split("T")[0];
+  return `${fullYear}-${month}-${dateStr}`;
 };
 
-const defaultMinDate = getDateString(new Date(1970, 0, 1));
-const defaultMaxDate = getDateString(new Date(2050, 11, 31, 23, 59, 49));
+export const defaultMinDate = getDateString(new Date(1970, 0, 1));
+export const defaultMaxDate = getDateString(new Date(2050, 11, 31, 23, 59, 49));
 
 const defaultSheet = new CSSStyleSheet();
 defaultSheet.replaceSync(css);
@@ -65,15 +64,15 @@ defaultSheet.replaceSync(css);
  * @attr {number} year - The currently displayed year.
  * @attr {number} month - The currently displayed month (0-indexed).
  * @attr {string} date - The selected date in "YYYY-MM-DD" format.
- * @attr {string} min-date - The minimum selectable date.
- * @attr {string} max-date - The maximum selectable dat.
+ * @attr {string} min-date - The minimum selectable date in the format YYYY-MM-DD or ISO format
+ * @attr {string} max-date - The maximum selectable date in the format YYYY-MM-DD or ISO format
  *
- * @prop {View} view - The current view of the calendar.
- * @prop {number} year - The currently displayed year.
- * @prop {number} month - The currently displayed month.
- * @prop {string} date - The selected date.
- * @prop {string} minDate - The minimum selectable date in the format YYYY-MM-DD or ISO format
- * @prop {string} maxDate - The maximum selectable date in the format YYYY-MM-DD or ISO format
+ * @prop {View} view
+ * @prop {number} year
+ * @prop {number} month
+ * @prop {string} date
+ * @prop {string} minDate
+ * @prop {string} maxDate
  *
  * @fires {CustomEvent<{ date: string }>} date-select - Fired on every user selection action (click or keyboard), regardless of whether the date value has changed.
  * @fires {CustomEvent<{ source: CustomCalendar, attribute: 'date', oldValue: string | null, newValue: string }>} change - Fired only when the `date` attribute's value actually changes.

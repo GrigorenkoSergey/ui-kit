@@ -589,7 +589,7 @@ test.describe("Подключение к нативным формам", async (
       await form.getByRole("gridcell", { name: "14" }).click();
 
       await submit.click();
-      const text = "02/14/2026";
+      const text = "2026-02-14";
       await expect(formInfo).toContainText(text);
 
       await reset.click();
@@ -600,7 +600,7 @@ test.describe("Подключение к нативным формам", async (
       await form.getByRole("button", { name: "Открыть календарь" }).click();
       await form.getByRole("gridcell", { name: "14" }).click();
 
-      const text = "02/14/2026";
+      const text = "2026-02-14";
       await submit.click();
       await expect(formInfo).toContainText(text);
 

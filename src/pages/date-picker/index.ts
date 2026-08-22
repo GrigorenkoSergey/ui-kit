@@ -41,7 +41,7 @@ export default () => {
     assert(target instanceof DatePicker);
     errorMessage.textContent = "";
 
-    if (target.date === "02/15/2026") {
+    if (target.date === "2026-02-15") {
       target.setCustomValidity("Нельзя выбрать эту дату!");
     }
 

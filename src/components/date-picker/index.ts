@@ -1,14 +1,16 @@
 import template from "./template.html";
 import css from "./style.css?raw";
 import { assert } from "@/utils/assert";
-import { CustomCalendar } from "../custom-calendar";
+import { 
+  CustomCalendar, 
+  defaultMaxDate, 
+  defaultMinDate, 
+  getDateString, 
+} from "../custom-calendar";
 import { RushFormElement, createRushElement, initCustomElement } from "../rush-form-element";
 
 const defaultSheet = new CSSStyleSheet();
 defaultSheet.replaceSync(css);
-
-const defaultMinYear = 1970;
-const defaultMaxYear = 2050;
 
 const dateExpandableSequences = ["00", "01", "02", "03", "10", "20", "30"];
 const monthExpandableSequeses = ["00", "01"];
@@ -28,13 +30,7 @@ const focusInputToThe = (dir: "left" | "right", from: HTMLInputElement) => {
   if (next) next.focus();
 };
 
-const getDateString = (date: Date) => date.toLocaleDateString("en", {
-  year: "numeric", 
-  month: "2-digit",
-  day: "2-digit",
-});
-
-const observedAttributes = ["disabled", "min-year", "max-year", "open", "date", "locale"] as const;
+const observedAttributes = ["disabled", "min-date", "max-date", "open", "date", "locale"] as const;
 
 /**
  * @element date-picker
@@ -47,16 +43,16 @@ const observedAttributes = ["disabled", "min-year", "max-year", "open", "date", 
  * The format is based on toLocaleDateString with an "en" locale.
  * @attr {boolean} disabled - Disables the date picker.
  * @attr {boolean} required - Marks the date picker as a required field in a form.
- * @attr {number} min-year - The minimum selectable year in the calendar.
- * @attr {number} max-year - The maximum selectable year in the calendar.
+ * @attr {string} min-date - The minimum selectable year in the calendar format YYYY-MM-DD or ISO
+ * @attr {string} max-date - The maximum selectable year in the calendar format YYYY-MM-DD or ISO
  * @attr {string} locale - The locale to use for formatting the date inputs (e.g., "en-US", "en-GB").
  *
  * @prop {boolean} open
  * @prop {string | null} date
  * @prop {boolean} disabled
  * @prop {boolean} required
- * @prop {number} minYear
- * @prop {number} maxYear
+ * @prop {string} minDate
+ * @prop {string} maxDate
  * @prop {string} locale
  *
  * @fires {CustomEvent<{ source: DatePicker, attribute: 'date', oldValue: string | null, newValue: string | null }>} change - 
@@ -112,14 +108,12 @@ export const DatePicker = createRushElement(class extends RushFormElement {
     this.toggleAttribute("open", value);
   }
 
-  get minYear() {
-    if (!this.hasAttribute("min-year")) return defaultMinYear;
-    return Number(this.getAttribute("min-year"));
+  get minDate() {
+    return this.getAttribute("min-date") || defaultMinDate;
   }
 
-  get maxYear() {
-    if (!this.hasAttribute("max-year")) return defaultMaxYear;
-    return Number(this.getAttribute("max-year"));
+  get maxDate() {
+    return this.getAttribute("max-date") || defaultMaxDate;
   }
 
   get date() {
@@ -194,8 +188,8 @@ export const DatePicker = createRushElement(class extends RushFormElement {
       } else if (!this.hasAttribute(name)) this.setAttribute(name, value);
     };
 
-    ensureAttribute("min-year", String(this.minYear));
-    ensureAttribute("max-year", String(this.maxYear));
+    ensureAttribute("min-date", this.minDate);
+    ensureAttribute("max-date", this.maxDate);
     ensureAttribute("open", this.open);
     ensureAttribute("locale", navigator.language);
   }
@@ -211,8 +205,8 @@ export const DatePicker = createRushElement(class extends RushFormElement {
       this.pendingUpdates.add("open");
     }
 
-    if (pendingUpdates.has("min-year")) yearInput.min = String(this.minYear);
-    if (pendingUpdates.has("max-year")) yearInput.max = String(this.maxYear);
+    if (pendingUpdates.has("min-date")) yearInput.min = String(new Date(this.minDate).getFullYear());
+    if (pendingUpdates.has("max-date")) yearInput.max = String(new Date(this.maxDate).getFullYear());
 
     if (pendingUpdates.has("open")) {
       if (this.open) this.renderCalendar();
@@ -474,7 +468,9 @@ export const DatePicker = createRushElement(class extends RushFormElement {
 
     let validYear;
     const yearInInput = +this.#nodes.yearInput.value;
-    if (yearInInput >= this.minYear && yearInInput <= this.maxYear) {
+    const minYear = +new Date(this.minDate).getFullYear();
+    const maxYear = +new Date(this.maxDate).getFullYear();
+    if (yearInInput >= minYear && yearInInput <= maxYear) {
       validYear = yearInInput;
     }
     if (!validYear) return null;
