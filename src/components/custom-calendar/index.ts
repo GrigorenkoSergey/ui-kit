@@ -5,6 +5,7 @@ import { createRushElement, RushElement, initCustomElement } from "../rush-eleme
 import translations from "./translations";
 
 const msInDay = 24 * 60 * 60 * 1000;
+const msInMiniute = 60 * 1000;
 
 const monthDates = (d: string) => {
   const date = new Date(d);
@@ -38,19 +39,22 @@ type ArrowKey = "ArrowLeft" | "ArrowRight" | "ArrowDown" | "ArrowUp";
 
 const observedAttributes = ["year", "month", "date", "view", "locale"] as const;
 type ObservedAttribute = typeof observedAttributes[number];
-const defaultMinYear = 1970;
-const defaultMaxYear = 2050;
 
-const getDateString = (date: Date) => date.toLocaleDateString("en", {
-  year: "numeric", 
-  month: "2-digit",
-  day: "2-digit",
-});
+const getDateString = (date: Date) => { // to YYYY-MM-DD (locale date)
+  const offset = date.getTimezoneOffset();
+
+  return new Date(Number(date) - offset * msInMiniute)
+    .toISOString()
+    .split("T")[0];
+};
+
+const defaultMinDate = getDateString(new Date(1970, 0, 1));
+const defaultMaxDate = getDateString(new Date(2050, 11, 31, 23, 59, 49));
 
 const defaultSheet = new CSSStyleSheet();
 defaultSheet.replaceSync(css);
 
-// паттерн grid https://www.w3.org/WAI/ARIA/apg/patterns/grid/
+// grid pattern https://www.w3.org/WAI/ARIA/apg/patterns/grid/
 /**
  * @element custom-calendar
  * @description
@@ -60,16 +64,16 @@ defaultSheet.replaceSync(css);
  * @attr {string} view - The current view of the calendar. Can be "dates", "months", or "years".
  * @attr {number} year - The currently displayed year.
  * @attr {number} month - The currently displayed month (0-indexed).
- * @attr {string} date - The selected date in "MM/DD/YYYY" format.
- * @attr {number} min-year - The minimum selectable year.
- * @attr {number} max-year - The maximum selectable year.
+ * @attr {string} date - The selected date in "YYYY-MM-DD" format.
+ * @attr {string} min-date - The minimum selectable date.
+ * @attr {string} max-date - The maximum selectable dat.
  *
  * @prop {View} view - The current view of the calendar.
  * @prop {number} year - The currently displayed year.
  * @prop {number} month - The currently displayed month.
  * @prop {string} date - The selected date.
- * @prop {number} minYear - The minimum selectable year.
- * @prop {number} maxYear - The maximum selectable year.
+ * @prop {string} minDate - The minimum selectable date in the format YYYY-MM-DD or ISO format
+ * @prop {string} maxDate - The maximum selectable date in the format YYYY-MM-DD or ISO format
  *
  * @fires {CustomEvent<{ date: string }>} date-select - Fired on every user selection action (click or keyboard), regardless of whether the date value has changed.
  * @fires {CustomEvent<{ source: CustomCalendar, attribute: 'date', oldValue: string | null, newValue: string }>} change - Fired only when the `date` attribute's value actually changes.
@@ -131,20 +135,18 @@ export const CustomCalendar = createRushElement(class extends RushElement {
     this.setAttribute("date", d);
   }
 
-  get minYear() {
-    if (!this.hasAttribute("min-year")) return defaultMinYear;
-
-    const dateYear = new Date(this.date).getFullYear();
-    const attrValue = Number(this.getAttribute("min-year"));
-    return attrValue > dateYear ? defaultMinYear : attrValue;
+  get minDate() {
+    return this.getAttribute("min-date") || defaultMinDate;
+  }
+  set minDate(value: string) {
+    this.setAttribute("min-date", value);
   }
 
-  get maxYear() {
-    if (!this.hasAttribute("max-year")) return defaultMaxYear;
-
-    const dateYear = new Date(this.date).getFullYear();
-    const attrValue = Number(this.getAttribute("max-year"));
-    return attrValue < dateYear ? defaultMinYear : attrValue;
+  get maxDate() {
+    return this.getAttribute("max-date") || defaultMaxDate;
+  }
+  set maxDate(value: string) {
+    this.setAttribute("max-date", value);
   }
 
   connectedCallback() {
@@ -175,13 +177,20 @@ export const CustomCalendar = createRushElement(class extends RushElement {
       if (!this.hasAttribute(name)) this.setAttribute(name, value);
     };
 
+    const dateTimestamp = this.date ? +new Date(this.date) : -1;
+    const isOutsideRange = dateTimestamp < +new Date(this.minDate) || dateTimestamp > +new Date(this.maxDate);
+
+    if (dateTimestamp !== -1 && isOutsideRange) {
+      throw new Error("Date is less than minimum or greater than maximum");
+    }
+
     ensureAttribute("locale", navigator.language);
     ensureAttribute("view", "dates");
     ensureAttribute("date", this.date);
     ensureAttribute("month", String(this.month));
     ensureAttribute("year", String(this.year));
-    ensureAttribute("min-year", String(this.minYear));
-    ensureAttribute("max-year", String(this.maxYear));
+    ensureAttribute("min-date", this.minDate);
+    ensureAttribute("max-date", this.maxDate);
   }
 
   render() {
@@ -272,7 +281,9 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   }
 
   renderYears() {
-    const {minYear, maxYear} = this;
+    const {minDate, maxDate} = this;
+    const minYear = new Date(minDate).getFullYear();
+    const maxYear = new Date(maxDate).getFullYear();
     const yearsPerRow = 4;
     const maxRows = Math.ceil((maxYear + 1 - minYear) / yearsPerRow);
     const tbody = document.createElement("tbody");
@@ -486,8 +497,9 @@ export const CustomCalendar = createRushElement(class extends RushElement {
 
         const dir = code === "PageUp" ? -1 : 1;
         const monthDiff = (shiftKey ? 12 : 1) * dir;
-
-        const dateToFocus = host.addMonthSafely(new Date(date), monthDiff, host.minYear, host.maxYear);
+        const minYear = new Date(host.minDate).getFullYear();
+        const maxYear = new Date(host.maxDate).getFullYear();
+        const dateToFocus = host.addMonthSafely(new Date(date), monthDiff, minYear, maxYear);
         if (!dateToFocus) return;
 
         host.year = dateToFocus.getFullYear();
@@ -518,7 +530,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
     }
   }
 
-  addMonthSafely(d: Date, delta: number, minYear: number, maxYear:number) {
+  addMonthSafely(d: Date, delta: number, minYear: number, maxYear: number) {
     const nextPeriodLastDate = new Date(d.getFullYear(), d.getMonth() + delta + 1, 0);
     const nextPeriodFirstDate = new Date(d.getFullYear(), d.getMonth() + delta);
     const dateOfNextPeriod = new Date(d.getFullYear(), d.getMonth() + delta, d.getDate());
@@ -552,8 +564,7 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   }
 
   moveDateFocus(nextDate: Date, host: this) {
-    const nextDateYear = nextDate.getFullYear();
-    if (nextDateYear < host.minYear || nextDateYear > host.maxYear) return;
+    if (+nextDate < +new Date(host.minDate) || +nextDate > +new Date(host.maxDate)) return;
 
     const isNextDateFromOtherMonth = nextDate.getMonth() !== host.month;
     const isNextDateFromOtherYear = nextDate.getFullYear() !== host.year;
@@ -615,17 +626,17 @@ export const CustomCalendar = createRushElement(class extends RushElement {
   }
 
   disableMonthArrowIfNeeded() {
-    const {year, month, minYear, maxYear, shadowRoot} = this;
+    const {year, month, minDate, maxDate, shadowRoot} = this;
 
     const prevMonthBtn = shadowRoot.getElementById("prev-month");
     assert(prevMonthBtn instanceof HTMLButtonElement);
     const prevMonthDate = new Date(year, month - 1);
-    prevMonthBtn.disabled = prevMonthDate.getFullYear() < minYear;
+    prevMonthBtn.disabled = +prevMonthDate < +new Date(minDate);
 
     const nextMonthBtn = shadowRoot.getElementById("next-month");
     assert(nextMonthBtn instanceof HTMLButtonElement);
     const nextMonthDate = new Date(year, month + 1);
-    nextMonthBtn.disabled = nextMonthDate.getFullYear() > maxYear;
+    nextMonthBtn.disabled = +nextMonthDate > +new Date(maxDate);
   }
 
   getDateCell(date: Date) {

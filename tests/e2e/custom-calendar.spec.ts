@@ -154,7 +154,7 @@ test("Возможность выбирать даты с помощью кла�
   });
 
   await test.step("При движении налево, при достижении границы \
-    предыдущего месяца каленарик перестраивается", async () => {
+    предыдущего месяца календарик перестраивается", async () => {
     await calendar.getByRole("gridcell", { name: "1", exact: true }).first().click(); 
     await page.keyboard.down("ArrowLeft");
     await expect(dateCellLocator(31).last()).toBeFocused();
@@ -176,7 +176,7 @@ test("Возможность выбирать даты с помощью кла�
   });
 
   await test.step("При движении направо, при достижении границы \
-    следующего месяца каленарик перестраивается", async () => {
+    следующего месяца календарик перестраивается", async () => {
     await calendar.getByRole("gridcell", { name: "31" }).last().click(); 
     await page.keyboard.down("ArrowRight");
     await expect(dateCellLocator(1).first()).toBeFocused();
@@ -429,18 +429,18 @@ test.describe("Дополнительные кнопки клавиатуры д
   });
 });
 
-test.describe("Минимальные, максимальные года", async () => {
+test.describe("Минимальные, максимальные даты", async () => {
   test.beforeEach(async ({page}) => {
     await page.evaluate(() => {
       const calendarNode = document.querySelector("[data-testid='basic']");
       if (calendarNode) {
-        calendarNode.setAttribute("min-year", "2010");
-        calendarNode.setAttribute("max-year", "2030");
+        calendarNode.setAttribute("min-date", new Date(2010, 0, 1).toISOString());
+        calendarNode.setAttribute("max-date", new Date((+new Date(2031, 0, 1) - 1000)).toISOString());
       }
     });
   });
 
-  test("Минимальный год", async ({page}) => {
+  test("Минимальная дата", async ({page}) => {
     const calendar = page.getByTestId("basic");
 
     await test.step("Приблизимся к нижней границе", async () => {
